@@ -10,6 +10,8 @@ import time
 import psutil
 
 from .debate_engine import run_debate_fast
+from .fact_bot import fact_bot
+from .voice import voice_synthesizer
 
 # Data storage
 DATA_DIR = Path("/app/data") if Path("/app").exists() else Path.home() / ".trillm_arena"
@@ -86,6 +88,25 @@ def run_debate(req: DebateRequest):
             topic=req.topic,
             deep_review=req.deep_review,
         )
+        
+        # Run fact-checking bot analysis
+        bot_signals = fact_bot.get_judge_signals(
+            result.get("model_a", {}).get("argument", ""),
+            result.get("model_b", {}).get("argument", "")
+        )
+        
+        # Add bot analysis to result
+        result["bot_analysis"] = {
+            "grounding_a": bot_signals["model_a_grounding"],
+            "grounding_b": bot_signals["model_b_grounding"],
+            "recommendation": bot_signals["recommendation"],
+        }
+        
+        # Generate audio if voice enabled
+        voice_output = voice_synthesizer.synthesize_debate_results(result)
+        if voice_output["status"] == "generated":
+            result["audio_files"] = voice_output["audio_files"]
+        
         # Save to persistent storage
         save_debate(result)
         return result
@@ -216,3 +237,70 @@ def monitor_debates():
             pass
     
     return stats
+
+
+# ===== Fact-Checking Bot =====
+@app.post("/bot/analyze")
+def bot_analyze_claim(request: dict):
+    """Fact-check a single claim"""
+    claim = request.get("claim", "")
+    if not claim:
+        raise HTTPException(status_code=400, detail="Claim required")
+    
+    result = fact_bot.check_claim(claim)
+    return result
+
+
+@app.post("/bot/analyze-debate")
+def bot_analyze_debate(request: dict):
+    """Analyze debate for factual grounding"""
+    model_a_arg = request.get("model_a", "")
+    model_b_arg = request.get("model_b", "")
+    
+    signals = fact_bot.get_judge_signals(model_a_arg, model_b_arg)
+    return signals
+
+
+# ===== Voice Synthesis =====
+@app.post("/voice/synthesize")
+def voice_synthesize(request: dict):
+    """Generate speech from text"""
+    text = request.get("text", "")
+    speaker = request.get("speaker", "model_a")  # model_a (male) or model_b (female)
+    
+    if not text:
+        raise HTTPException(status_code=400, detail="Text required")
+    
+    audio_file = voice_synthesizer.synthesize(text, speaker)
+    
+    return {
+        "text": text,
+        "speaker": speaker,
+        "audio_file": audio_file,
+        "status": "generated" if audio_file else "tts_disabled"
+    }
+
+
+@app.post("/voice/enable")
+def voice_enable():
+    """Enable voice synthesis"""
+    from .voice import enable_voice_synthesis
+    enable_voice_synthesis()
+    return {"status": "voice_enabled"}
+
+
+@app.post("/voice/disable")
+def voice_disable():
+    """Disable voice synthesis"""
+    from .voice import disable_voice_synthesis
+    disable_voice_synthesis()
+    return {"status": "voice_disabled"}
+
+
+@app.get("/voice/status")
+def voice_status():
+    """Check voice synthesis status"""
+    return {
+        "enabled": voice_synthesizer.enable_tts,
+        "audio_dir": str(voice_synthesizer.audio_dir),
+    }
