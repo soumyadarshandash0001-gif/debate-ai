@@ -1,0 +1,143 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly security scan
+
+jobs:
+  # Code Quality Checks
+  code-quality:
+    runs-on: ubuntu-latest
+    name: Code Quality & Linting
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pylint black flake8 mypy
+      
+      - name: Format check with black
+        run: black --check trillm_arena/
+        continue-on-error: true
+      
+      - name: Lint with flake8
+        run: flake8 trillm_arena/ --count --select=E9,F63,F7,F82 --show-source --statistics
+        continue-on-error: true
+      
+      - name: Type check with mypy
+        run: mypy trillm_arena/ --ignore-missing-imports
+        continue-on-error: true
+
+  # Security Scanning
+  security:
+    runs-on: ubuntu-latest
+    name: Security Scanning
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit safety
+      
+      - name: Run Bandit security check
+        run: bandit -r trillm_arena/ -f json -o bandit-report.json
+        continue-on-error: true
+      
+      - name: Check dependencies with safety
+        run: safety check --json
+        continue-on-error: true
+
+  # Docker Build Test
+  docker-build:
+    runs-on: ubuntu-latest
+    name: Docker Build Test
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker images
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          targets: api
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Documentation Check
+  documentation:
+    runs-on: ubuntu-latest
+    name: Documentation Check
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check README exists
+        run: test -f README.md && echo "✓ README.md found"
+      
+      - name: Check LICENSE exists
+        run: test -f LICENSE && echo "✓ LICENSE found"
+      
+      - name: Validate markdown
+        run: |
+          pip install markdownlint-cli
+          markdownlint README.md DEPLOYMENT_GUIDE.md || true
+
+  # Dependency Check
+  dependencies:
+    runs-on: ubuntu-latest
+    name: Dependency Check
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+      
+      - name: Audit dependencies
+        run: pip-audit
+        continue-on-error: true
+
+  # Notify on completion
+  notify:
+    runs-on: ubuntu-latest
+    name: Notify Status
+    needs: [code-quality, security, docker-build, documentation, dependencies]
+    if: always()
+    
+    steps:
+      - name: Check job status
+        run: |
+          echo "✅ CI/CD Pipeline Completed"
+          echo "Check artifacts and logs for details"

@@ -1,0 +1,97 @@
+version: '3.9'
+
+# GPU-Enabled Docker Compose for TriLLM Arena
+# Usage: docker-compose -f docker-compose.gpu.yml up -d
+# Requirements:
+# - NVIDIA Docker Runtime
+# - NVIDIA GPU drivers
+# - NVIDIA CUDA Toolkit (optional, for best performance)
+
+services:
+  # Ollama LLM Server with GPU Support
+  ollama:
+    image: ollama/ollama:latest
+    container_name: trillm-ollama-gpu
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      # GPU Configuration
+      CUDA_VISIBLE_DEVICES: "0"  # Change to GPU ID if multiple GPUs
+      OLLAMA_DEBUG: "0"
+    # GPU Runtime Configuration
+    runtime: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1  # Number of GPUs to use
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # FastAPI Debate Engine
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: trillm-api-gpu
+    ports:
+      - "8000:8000"
+    environment:
+      PYTHONUNBUFFERED: "1"
+      LOG_LEVEL: "info"
+    depends_on:
+      ollama:
+        condition: service_healthy
+    volumes:
+      - ./trillm_arena:/app/trillm_arena
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  # Streamlit Web Interface
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: streamlit
+    container_name: trillm-ui-gpu
+    ports:
+      - "8501:8501"
+    environment:
+      PYTHONUNBUFFERED: "1"
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./trillm_arena:/app/trillm_arena
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8501/_stcore/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  ollama_data:
+    driver: local
+
+networks:
+  default:
+    name: trillm-network-gpu

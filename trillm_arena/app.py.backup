@@ -1,0 +1,42 @@
+import streamlit as st
+import json
+import sys
+from pathlib import Path
+
+# Add parent directory to path if debate_engine_fast is there
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from debate_engine_fast import run_debate_fast
+
+st.set_page_config(layout="wide")
+st.title("⚡ TriLLM Arena (Fast Mode)")
+
+topic = st.text_input("Debate Topic")
+
+if st.button("Start Fast Debate") and topic:
+    with st.spinner("Running optimized debate..."):
+        result = run_debate_fast(topic)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("Model A — Mistral")
+        st.markdown(result["a"]["open"])
+        st.markdown("**Rebuttal**")
+        st.markdown(result["a"]["rebut"])
+        st.markdown("**Defense**")
+        st.markdown(result["a"]["def"])
+
+    with col2:
+        st.subheader("Model B — LLaMA-3")
+        st.markdown(result["b"]["open"])
+        st.markdown("**Rebuttal**")
+        st.markdown(result["b"]["rebut"])
+        st.markdown("**Defense**")
+        st.markdown(result["b"]["def"])
+
+    st.subheader("⚖️ Judge Verdict")
+    try:
+        st.json(json.loads(result["verdict"]))
+    except:
+        st.text(result["verdict"])

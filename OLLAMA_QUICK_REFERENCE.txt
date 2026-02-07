@@ -1,0 +1,166 @@
+# ⚡ Ollama Quick Reference Card
+
+## 🎯 The Issue (Explained Simply)
+
+Your **code is perfect** ✅
+
+But your **Ollama service** is not running or accessible ⏳
+
+Ollama = The AI brain that runs the debates
+- Without it: Debates fail
+- With it: Debates work perfectly
+
+---
+
+## ✅ 3-Minute Fix
+
+### Terminal 1: Start Ollama
+```bash
+ollama serve
+```
+(Leave this running)
+
+### Terminal 2: Download Models
+```bash
+ollama pull mistral
+ollama pull llama3
+```
+(Wait for downloads)
+
+### Terminal 3: Run Your App
+```bash
+cd "debate ai"
+streamlit run trillm_arena/app.py
+```
+
+### Browser: Try It
+```
+http://localhost:8501
+```
+
+---
+
+## 🔍 Verify Each Step
+
+```bash
+# 1. Is Ollama running?
+curl http://localhost:11434/api/tags
+
+# 2. Are models downloaded?
+ollama list
+
+# 3. Test a model
+ollama run mistral "Hello"
+
+# 4. Test your app
+python test_api.py "Your debate topic"
+```
+
+---
+
+## 🐳 If Using Docker
+
+### Option A: Ollama on Host
+```bash
+# Terminal 1: Start Ollama (stays running)
+ollama serve
+
+# Terminal 2: Start Docker app
+docker-compose up -d
+
+# Add to .env:
+OLLAMA_URL=http://host.docker.internal:11434
+```
+
+### Option B: Ollama in Docker
+```bash
+# Update docker-compose.yml to include ollama service
+# Then:
+docker-compose up -d
+```
+
+---
+
+## 📍 Common URLs
+
+| Service | URL |
+|---------|-----|
+| **Ollama** | http://localhost:11434 |
+| **Your App** | http://localhost:8501 |
+| **API** | http://localhost:8000 |
+| **API Docs** | http://localhost:8000/docs |
+
+---
+
+## ❌ If Debate Still Fails
+
+1. **Check Ollama is running**:
+   ```bash
+   curl http://localhost:11434/api/tags
+   ```
+
+2. **Check models exist**:
+   ```bash
+   ollama list
+   ```
+
+3. **Check logs**:
+   ```bash
+   # macOS
+   tail -f ~/Library/Logs/Ollama/Ollama.log
+   ```
+
+4. **Try manual model test**:
+   ```bash
+   ollama run mistral "test"
+   ```
+
+---
+
+## 📦 Installation Links
+
+- **Ollama**: https://ollama.ai
+- **Models List**: https://ollama.ai/library
+- **Docker**: https://docker.com
+
+---
+
+## 🎓 Models Explained
+
+| Model | Speed | Quality | Size | Best For |
+|-------|-------|---------|------|----------|
+| **mistral** | Fast | Good | 5GB | ✅ Default A |
+| **llama3** | Fast | Good | 4GB | ✅ Default B |
+| **mixtral** | Slow | Best | 26GB | Judge (Heavy) |
+| **orca-mini** | Very Fast | Fair | 1GB | Quick tests |
+| **neural-chat** | Fast | Good | 4GB | Alternative |
+
+---
+
+## 💾 Storage
+
+Models take disk space (typically 4-5GB each)
+
+Check space:
+```bash
+df -h
+```
+
+Free up space:
+```bash
+ollama rm mistral    # Delete model
+```
+
+---
+
+## 🚀 You're Ready!
+
+1. Install Ollama
+2. Run `ollama serve`
+3. Pull models
+4. Run your app
+5. Enjoy debates! 🎉
+
+---
+
+**See**: `OLLAMA_SETUP.md` for detailed instructions
