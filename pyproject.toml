@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "trillm-arena"
+version = "2.0.0"
+description = "Production-Grade Multi-LLM Debate Engine with Voice"
+authors = ["Soumyadarshan Dash <soumyadarshandash0001@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "trillm_arena"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+streamlit = "^1.28.0"
+fastapi = "^0.104.0"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+requests = "^2.31.0"
+python-dotenv = "^1.0.0"
+pydantic = "^2.5.0"
+pydantic-settings = "^2.1.0"
+gunicorn = "^21.2.0"
+aiofiles = "^23.2.0"
+python-json-logger = "^2.0.7"
+psutil = "^5.9.6"
+plotly = "^5.18.0"
+pyttsx3 = "^2.90"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

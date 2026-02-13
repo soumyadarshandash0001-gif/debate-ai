@@ -85,3 +85,21 @@ Return ONLY valid JSON (no markdown, no explanation):
   }},
   "reasoning": "<concise 1-2 sentence explanation>"
 }}"""
+
+
+def iterative_response_prompt(topic: str, opponent_previous: str, opponent_name: str) -> str:
+    """Generate prompt for iterative round response."""
+    return f"""You are in an iterative debate on the topic:
+"{topic}"
+
+{opponent_name} just said:
+{opponent_previous}
+
+Task:
+1. Acknowledge their point
+2. Identify any logical gaps or assumptions
+3. Present your counter-argument or clarification
+4. Keep it concise (max 150 words)
+5. Be respectful but firm
+
+Provide your response now:"""

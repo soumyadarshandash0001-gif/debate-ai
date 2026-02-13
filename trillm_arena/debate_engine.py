@@ -9,18 +9,20 @@ from .prompts import (
     rebuttal_prompt,
     defense_prompt,
     judge_prompt,
+    iterative_response_prompt,
 )
 
 logger = logging.getLogger(__name__)
 
 # ===== Configuration =====
-MODEL_A = "mistral"
-MODEL_B = "llama3"
-FAST_JUDGE = "llama3"
-HEAVY_JUDGE = "mixtral"
+MODEL_A = "llama3.2"
+MODEL_B = "llama3.1:8b"
+FAST_JUDGE = "llama3.2"
+HEAVY_JUDGE = "llama3.1:8b"
 
 TIMEOUT_SECONDS = 120
 MAX_WORKERS = 4
+DEBATE_ROUNDS = 3  # Number of iterative rounds
 
 
 class DebateError(Exception):

@@ -107,8 +107,8 @@ with st.sidebar:
     st.markdown("### About")
     st.markdown("""
     TriLLM Arena runs structured AI debates between:
-    - **Model A**: Mistral
-    - **Model B**: LLaMA-3
+    - **Model A**: LLaMA-3.2
+    - **Model B**: LLaMA-3.1 (8B)
     
     Each debate includes:
     1. Opening arguments
