@@ -9,7 +9,7 @@ Everything is configured and ready to go. Here's how to deploy to **Streamlit Cl
 ## 📊 What's Ready
 
 ✅ **Local Development**
-- Ollama running with LLaMA 3.2 & LLaMA 3.1 8B
+- Ollama running with LLaMA 3.2, Qwen 3 VL 4B, and LLaMA 3.1 8B
 - FastAPI backend on :8000
 - Streamlit v2 UI on :8503
 - Voice synthesis enabled (macOS `say` command)

@@ -126,7 +126,8 @@ NOW                           DEPLOYMENT DAY
                │  (Local only)  │
                │                │
                │  • LLaMA 3.2   │
-               │  • LLaMA 3.1   │
+               │  • Qwen 3 VL 4B│
+               │  • LLaMA 3.1  │
                │                │
                └────────────────┘
 ```

@@ -88,7 +88,8 @@ UPDATES:    Auto-deploy on git push
 |-----------|--------|
 | Ollama Server | ✅ Running |
 | LLaMA 3.2 | ✅ Available |
-| LLaMA 3.1 8B | ✅ Available |
+| Qwen 3 VL 4B | ✅ Available |
+| LLaMA 3.1 8B (Judge) | ✅ Available |
 | Voice Synthesis | ✅ Working |
 | FastAPI Backend | ✅ Running |
 | Streamlit UI | ✅ Running |

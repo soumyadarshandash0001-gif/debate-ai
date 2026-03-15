@@ -22,8 +22,9 @@ ollama serve
 
 ### Terminal 2: Download Models
 ```bash
-ollama pull mistral
-ollama pull llama3
+ollama pull llama3.2
+ollama pull qwen3-vl:4b
+ollama pull llama3.1:8b
 ```
 (Wait for downloads)
 
@@ -50,7 +51,7 @@ curl http://localhost:11434/api/tags
 ollama list
 
 # 3. Test a model
-ollama run mistral "Hello"
+ollama run llama3.2 "Hello"
 
 # 4. Test your app
 python test_api.py "Your debate topic"
@@ -112,7 +113,7 @@ docker-compose up -d
 
 4. **Try manual model test**:
    ```bash
-   ollama run mistral "test"
+ollama run llama3.2 "test"
    ```
 
 ---
@@ -129,9 +130,9 @@ docker-compose up -d
 
 | Model | Speed | Quality | Size | Best For |
 |-------|-------|---------|------|----------|
-| **mistral** | Fast | Good | 5GB | ✅ Default A |
-| **llama3** | Fast | Good | 4GB | ✅ Default B |
-| **mixtral** | Slow | Best | 26GB | Judge (Heavy) |
+| **llama3.2** | Fast | Good | Varies | ✅ Default A |
+| **qwen3-vl:4b** | Medium | Good | Varies | ✅ Default B |
+| **llama3.1:8b** | Medium | Good | Varies | Judge |
 | **orca-mini** | Very Fast | Fair | 1GB | Quick tests |
 | **neural-chat** | Fast | Good | 4GB | Alternative |
 
@@ -148,7 +149,7 @@ df -h
 
 Free up space:
 ```bash
-ollama rm mistral    # Delete model
+ollama rm qwen3-vl:4b    # Delete model
 ```
 
 ---

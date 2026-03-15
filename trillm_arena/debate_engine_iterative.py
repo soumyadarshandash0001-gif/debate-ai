@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional, List, Tuple
 from concurrent.futures import ThreadPoolExecutor
 
 from .llm import call_llm, LLMError
+from .model_config import get_model_config
 from .prompts import (
     opening_prompt,
     iterative_response_prompt,
@@ -14,11 +15,6 @@ from .prompts import (
 )
 
 logger = logging.getLogger(__name__)
-
-# ===== Configuration =====
-MODEL_A = "llama3.2"
-MODEL_B = "llama3.1:8b"
-JUDGE_MODEL = "llama3.1:8b"
 
 TIMEOUT_SECONDS = 120
 MAX_WORKERS = 2
@@ -33,6 +29,9 @@ class DebateError(Exception):
 def run_iterative_debate(
     topic: str,
     num_rounds: int = DEBATE_ROUNDS,
+    model_a_id: Optional[str] = None,
+    model_b_id: Optional[str] = None,
+    judge_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Run iterative debate where models respond to each other round by round.
@@ -59,7 +58,19 @@ def run_iterative_debate(
     if num_rounds < 1 or num_rounds > 5:
         raise DebateError("Number of rounds must be between 1 and 5")
     
-    logger.info(f"Starting {num_rounds}-round iterative debate on: {topic}")
+    config = get_model_config()
+    resolved_model_a = model_a_id or config.model_a_id
+    resolved_model_b = model_b_id or config.model_b_id
+    resolved_judge = judge_id or config.judge_id
+
+    logger.info(
+        "Starting %s-round iterative debate on: %s | Model A: %s | Model B: %s | Judge: %s",
+        num_rounds,
+        topic,
+        resolved_model_a,
+        resolved_model_b,
+        resolved_judge,
+    )
     
     try:
         rounds: List[Dict[str, str]] = []
@@ -71,10 +82,10 @@ def run_iterative_debate(
         
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
             future_a = executor.submit(
-                call_llm, MODEL_A, opening_prompt(topic), max_tokens=250
+                call_llm, resolved_model_a, opening_prompt(topic), max_tokens=250
             )
             future_b = executor.submit(
-                call_llm, MODEL_B, opening_prompt(topic), max_tokens=250
+                call_llm, resolved_model_b, opening_prompt(topic), max_tokens=250
             )
             
             opening_a = future_a.result(timeout=TIMEOUT_SECONDS)
@@ -104,7 +115,7 @@ def run_iterative_debate(
                     "Model B"
                 )
                 future_a = executor.submit(
-                    call_llm, MODEL_A, prompt_a, max_tokens=200
+                    call_llm, resolved_model_a, prompt_a, max_tokens=200
                 )
                 
                 # Model B responds to Model A's latest message
@@ -114,7 +125,7 @@ def run_iterative_debate(
                     "Model A"
                 )
                 future_b = executor.submit(
-                    call_llm, MODEL_B, prompt_b, max_tokens=200
+                    call_llm, resolved_model_b, prompt_b, max_tokens=200
                 )
                 
                 response_a = future_a.result(timeout=TIMEOUT_SECONDS)
@@ -141,7 +152,7 @@ def run_iterative_debate(
         
         try:
             verdict = call_llm(
-                JUDGE_MODEL,
+                resolved_judge,
                 judge_prompt(topic, full_debate_a, full_debate_b),
                 max_tokens=300,
                 temperature=0,
@@ -166,8 +177,8 @@ def run_iterative_debate(
             "verdict": verdict,
             "meta": {
                 "mode": "iterative",
-                "models": [MODEL_A, MODEL_B],
-                "judge": JUDGE_MODEL,
+                "models": [resolved_model_a, resolved_model_b],
+                "judge": resolved_judge,
             }
         }
         

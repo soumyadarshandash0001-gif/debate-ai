@@ -26,7 +26,7 @@ def call_llm(
     Call Ollama LLM with error handling and retries.
     
     Args:
-        model: Model name (e.g., 'mistral', 'llama3')
+        model: Model name (e.g., 'llama3.2', 'qwen3-vl:4b')
         prompt: Prompt text to send to the model
         max_tokens: Maximum tokens in response
         temperature: Temperature for generation (0-1)
@@ -70,11 +70,30 @@ def call_llm(
             response.raise_for_status()
             
             result = response.json()
-            
+
             if "response" not in result:
                 raise LLMError(f"Invalid response format from {model}")
-            
-            return result["response"].strip()
+
+            text = (result.get("response") or "").strip()
+
+            if not text and "qwen" in model.lower():
+                # Qwen VL can spend its budget in internal "thinking".
+                # Retry once without options to coax a final response.
+                fallback_payload = {
+                    "model": model,
+                    "prompt": f"{prompt}\n\nRespond with only the final answer.",
+                    "stream": False,
+                }
+                fallback = requests.post(
+                    OLLAMA_URL,
+                    json=fallback_payload,
+                    timeout=timeout,
+                )
+                fallback.raise_for_status()
+                fallback_result = fallback.json()
+                text = (fallback_result.get("response") or "").strip()
+
+            return text
             
         except Timeout as e:
             logger.warning(

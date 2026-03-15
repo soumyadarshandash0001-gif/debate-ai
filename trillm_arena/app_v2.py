@@ -33,8 +33,18 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from trillm_arena.debate_engine_iterative import run_iterative_debate, DebateError
+    from trillm_arena.model_config import get_model_config
 except ImportError:
     from debate_engine_iterative import run_iterative_debate, DebateError
+    from model_config import get_model_config
+
+MODEL_CONFIG = get_model_config()
+MODEL_A_ID = MODEL_CONFIG.model_a_id
+MODEL_B_ID = MODEL_CONFIG.model_b_id
+JUDGE_ID = MODEL_CONFIG.judge_id
+MODEL_A_LABEL = MODEL_CONFIG.model_a_label
+MODEL_B_LABEL = MODEL_CONFIG.model_b_label
+JUDGE_LABEL = MODEL_CONFIG.judge_label
 
 # ===== SIMPLE VOICE SYNTHESIS =====
 def speak_text(text: str, model: str = "A") -> bool:
@@ -360,13 +370,9 @@ with st.sidebar:
     st.divider()
     
     # Metrics Section
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        st.metric("Version", VERSION)
-    with col2:
-        st.metric("Status", "🟢 Live")
-    with col3:
-        st.metric("Author", "Dash")
+    col1 = st.columns(1)
+    with col1[0]:
+        st.metric("Author", "Soumyadarshan Dash")
     
     st.divider()
     
@@ -399,9 +405,9 @@ with st.sidebar:
     st.divider()
     
     st.markdown("### Active Models")
-    st.markdown("🔵 **Model A**: LLaMA 3.2")
-    st.markdown("🟠 **Model B**: LLaMA 3.1 (8B)")
-    st.markdown("⚖️ **Judge**: LLaMA 3.1 (8B)")
+    st.markdown(f"🔵 **Model A**: {MODEL_A_LABEL}")
+    st.markdown(f"🟠 **Model B**: {MODEL_B_LABEL}")
+    st.markdown(f"⚖️ **Judge**: {JUDGE_LABEL}")
 
 # ===== MAIN CONTENT =====
 col1, col2 = st.columns([3, 1])
@@ -434,7 +440,13 @@ if start_debate:
             
             # Run debate
             logger.info(f"Starting debate: {topic}")
-            result = run_iterative_debate(topic, num_rounds=rounds)
+            result = run_iterative_debate(
+                topic,
+                num_rounds=rounds,
+                model_a_id=MODEL_A_ID,
+                model_b_id=MODEL_B_ID,
+                judge_id=JUDGE_ID,
+            )
             
             progress_placeholder.empty()
             
@@ -462,11 +474,11 @@ if start_debate:
                 col_a, col_b = st.columns(2)
                 
                 with col_a:
-                    st.markdown("""
+                    st.markdown(f"""
                         <div class="model-response model-a">
                             <div class="model-header">
                                 <span class="model-label a">🔵 Model A</span>
-                                <span class="model-badge">LLaMA 3.2</span>
+                                <span class="model-badge">{MODEL_A_LABEL}</span>
                             </div>
                             <div class="model-text">
                     """, unsafe_allow_html=True)
@@ -474,11 +486,11 @@ if start_debate:
                     st.markdown("</div></div>", unsafe_allow_html=True)
                 
                 with col_b:
-                    st.markdown("""
+                    st.markdown(f"""
                         <div class="model-response model-b">
                             <div class="model-header">
                                 <span class="model-label b">🟠 Model B</span>
-                                <span class="model-badge b">LLaMA 3.1 (8B)</span>
+                                <span class="model-badge b">{MODEL_B_LABEL}</span>
                             </div>
                             <div class="model-text">
                     """, unsafe_allow_html=True)
@@ -621,9 +633,9 @@ if start_debate:
                 **Debate Format:** Iterative ({result['num_rounds']} rounds) with Voice Synthesis
                 
                 **Models:**
-                - Model A (🔵): LLaMA 3.2 (Voice: System Default 1)
-                - Model B (🟠): LLaMA 3.1 8B (Voice: System Default 2)
-                - Judge (⚖️): LLaMA 3.1 8B
+                - Model A (🔵): {MODEL_A_LABEL} (Voice: System Default 1)
+                - Model B (🟠): {MODEL_B_LABEL} (Voice: System Default 2)
+                - Judge (⚖️): {JUDGE_LABEL}
                 
                 **Results:**
                 - **Winner:** {winner}

@@ -188,7 +188,7 @@ with tab2:
                 df_models = pd.DataFrame(models["models"])
                 st.dataframe(df_models, use_container_width=True)
             else:
-                st.warning("⚠️ No models loaded. Pull models with: `ollama pull mistral`")
+                st.warning("⚠️ No models loaded. Pull models with: `ollama pull llama3.2`")
         else:
             st.error("❌ Ollama is not running. Start with: `ollama serve`")
             
@@ -199,9 +199,9 @@ with tab2:
 ollama serve
 
 # Terminal 2: Pull models
-ollama pull mistral
-ollama pull llama2
-ollama pull neural-chat
+ollama pull llama3.2
+ollama pull qwen3-vl:4b
+ollama pull llama3.1:8b
 """)
     else:
         st.error("Cannot fetch model information")

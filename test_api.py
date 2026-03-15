@@ -6,9 +6,21 @@ Simple API client for testing the TriLLM Arena API.
 import sys
 import json
 import requests
+from pathlib import Path
 from typing import Optional
 
 BASE_URL = "http://localhost:8000"
+
+sys.path.insert(0, str(Path(__file__).parent))
+try:
+    from trillm_arena.model_config import get_model_config
+except ImportError:
+    from model_config import get_model_config
+
+MODEL_CONFIG = get_model_config()
+MODEL_A_LABEL = MODEL_CONFIG.model_a_label
+MODEL_B_LABEL = MODEL_CONFIG.model_b_label
+JUDGE_LABEL = MODEL_CONFIG.judge_label
 
 
 class TriLLMClient:
@@ -64,7 +76,7 @@ def main():
         
         # Pretty print results
         print("=" * 80)
-        print("MODEL A - MISTRAL")
+        print(f"MODEL A - {MODEL_A_LABEL}")
         print("=" * 80)
         print("\nOpening Argument:")
         print(result["model_a"]["opening"])
@@ -74,7 +86,7 @@ def main():
         print(result["model_a"]["defense"])
         
         print("\n" + "=" * 80)
-        print("MODEL B - LLAMA-3")
+        print(f"MODEL B - {MODEL_B_LABEL}")
         print("=" * 80)
         print("\nOpening Argument:")
         print(result["model_b"]["opening"])
@@ -84,7 +96,7 @@ def main():
         print(result["model_b"]["defense"])
         
         print("\n" + "=" * 80)
-        print("JUDGE VERDICT")
+        print(f"JUDGE VERDICT ({JUDGE_LABEL})")
         print("=" * 80)
         try:
             verdict = json.loads(result["fast_verdict"])

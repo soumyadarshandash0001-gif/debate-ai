@@ -54,7 +54,7 @@ A sophisticated debate engine that orchestrates structured arguments between mul
 
 - **Docker & Docker Compose** (recommended)
 - **Python 3.11+** (for local development)
-- **Ollama** with Mistral, LLaMA-3, and Mixtral models installed
+- **Ollama** with LLaMA 3.2, Qwen 3 VL 4B, and LLaMA 3.1 8B models installed
 - **4GB+ RAM** recommended
 - **GPU Support** (Optional): NVIDIA GPU with CUDA drivers and NVIDIA Docker Runtime
 
@@ -70,15 +70,28 @@ The debate engine requires **Ollama** to be running. Without it, debates will fa
 ollama serve
 
 # 3. In another terminal, pull required models
-ollama pull mistral   # Model A
-ollama pull llama3    # Model B
-ollama pull mixtral   # Heavy Judge (optional)
+ollama pull llama3.2      # Model A
+ollama pull qwen3-vl:4b   # Model B
+ollama pull llama3.1:8b   # Judge
 
 # 4. Verify models are ready
 curl http://localhost:11434/api/tags
 ```
 
 **After this, your debates will work!** ✅
+
+### Model Configuration (Optional)
+
+You can override model IDs and display names without code changes:
+
+```bash
+export MODEL_A_ID="llama3.2"
+export MODEL_B_ID="qwen3-vl:4b"
+export JUDGE_MODEL_ID="llama3.1:8b"
+export MODEL_A_LABEL="LLaMA 3.2"
+export MODEL_B_LABEL="Qwen 3 VL 4B"
+export JUDGE_LABEL="LLaMA 3.1 8B"
+```
 
 ### For Docker Users
 
@@ -137,9 +150,9 @@ pip install -r requirements.txt
 ollama serve
 
 # Pull required models
-ollama pull mistral
-ollama pull llama3
-ollama pull mixtral
+ollama pull llama3.2
+ollama pull qwen3-vl:4b
+ollama pull llama3.1:8b
 
 # Run API server (in separate terminal)
 uvicorn trillm_arena.api_updated:app --reload --port 8000
@@ -316,9 +329,9 @@ curl http://localhost:8501/_stcore/health
 curl http://localhost:11434/api/tags
 
 # Ensure Ollama models are pulled
-ollama pull mistral
-ollama pull llama3
-ollama pull mixtral
+ollama pull llama3.2
+ollama pull qwen3-vl:4b
+ollama pull llama3.1:8b
 ```
 
 ### Slow Performance
@@ -436,4 +449,3 @@ OLLAMA_DEBUG=0          # Set to 1 for debugging
 - [ ] Custom judge models
 - [ ] Multi-GPU support
 - [ ] Quantization support for smaller models
-

@@ -19,7 +19,7 @@
 
 ### 3. **Model Updates** 🤖
 - **Model A**: LLaMA 3.2 (upgraded from Mistral)
-- **Model B**: LLaMA 3.1 8B (was llama3)
+- **Model B**: Qwen 3 VL 4B
 - **Judge**: LLaMA 3.1 8B for final verdict
 
 ---
@@ -218,7 +218,7 @@ All pre-existing dependencies work. No new packages needed!
 
 - ✅ **Iterative debate engine working**
 - ✅ **Professional UI with CSS deployed**
-- ✅ **Models updated (LLaMA 3.2 + 3.1)**
+- ✅ **Models updated (LLaMA 3.2 + Qwen 3 VL 4B + LLaMA 3.1 8B)**
 - ✅ **All services running**
 - ✅ **Ready for production**
 

@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, Any, Optional
 
 from .llm import call_llm, LLMError
+from .model_config import get_model_config
 from .prompts import (
     opening_prompt,
     rebuttal_prompt,
@@ -13,12 +14,6 @@ from .prompts import (
 )
 
 logger = logging.getLogger(__name__)
-
-# ===== Configuration =====
-MODEL_A = "llama3.2"
-MODEL_B = "llama3.1:8b"
-FAST_JUDGE = "llama3.2"
-HEAVY_JUDGE = "llama3.1:8b"
 
 TIMEOUT_SECONDS = 120
 MAX_WORKERS = 4
@@ -30,12 +25,12 @@ class DebateError(Exception):
     pass
 
 
-def _run_fast_judge(topic: str, a_text: str, b_text: str) -> str:
+def _run_fast_judge(topic: str, a_text: str, b_text: str, judge_model: str) -> str:
     """Run fast judgment on debate."""
     logger.debug("Running fast judge...")
     try:
         return call_llm(
-            FAST_JUDGE,
+            judge_model,
             judge_prompt(topic, a_text, b_text),
             max_tokens=150,
             temperature=0,
@@ -45,12 +40,12 @@ def _run_fast_judge(topic: str, a_text: str, b_text: str) -> str:
         raise DebateError(f"Fast judge error: {str(e)}")
 
 
-def _run_heavy_judge(topic: str, a_text: str, b_text: str) -> Optional[str]:
+def _run_heavy_judge(topic: str, a_text: str, b_text: str, judge_model: str) -> Optional[str]:
     """Run heavy judgment on debate."""
     logger.debug("Running heavy judge...")
     try:
         return call_llm(
-            HEAVY_JUDGE,
+            judge_model,
             judge_prompt(topic, a_text, b_text),
             max_tokens=200,
             temperature=0,
@@ -80,6 +75,10 @@ def _validate_debate_result(result: Dict[str, Any]) -> bool:
 def run_debate_fast(
     topic: str,
     deep_review: bool = False,
+    model_a_id: Optional[str] = None,
+    model_b_id: Optional[str] = None,
+    fast_judge_id: Optional[str] = None,
+    heavy_judge_id: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Run a production-grade debate with parallel execution.
@@ -98,7 +97,19 @@ def run_debate_fast(
     if not topic or len(topic.strip()) < 3:
         raise DebateError("Topic must be at least 3 characters long")
     
-    logger.info(f"Starting debate on topic: {topic}")
+    config = get_model_config()
+    resolved_model_a = model_a_id or config.model_a_id
+    resolved_model_b = model_b_id or config.model_b_id
+    resolved_fast_judge = fast_judge_id or config.fast_judge_id
+    resolved_heavy_judge = heavy_judge_id or config.heavy_judge_id
+
+    logger.info(
+        "Starting debate on topic: %s | Model A: %s | Model B: %s | Judge: %s",
+        topic,
+        resolved_model_a,
+        resolved_model_b,
+        resolved_heavy_judge,
+    )
     
     try:
         # ===== Parallel Debate Rounds =====
@@ -107,10 +118,10 @@ def run_debate_fast(
             
             # Openings
             futures["a_open"] = executor.submit(
-                call_llm, MODEL_A, opening_prompt(topic)
+                call_llm, resolved_model_a, opening_prompt(topic)
             )
             futures["b_open"] = executor.submit(
-                call_llm, MODEL_B, opening_prompt(topic)
+                call_llm, resolved_model_b, opening_prompt(topic)
             )
             
             # Get opening results
@@ -119,10 +130,10 @@ def run_debate_fast(
             
             # Rebuttals (dependent on openings)
             futures["a_rebut"] = executor.submit(
-                call_llm, MODEL_A, rebuttal_prompt(topic, b_open)
+                call_llm, resolved_model_a, rebuttal_prompt(topic, b_open)
             )
             futures["b_rebut"] = executor.submit(
-                call_llm, MODEL_B, rebuttal_prompt(topic, a_open)
+                call_llm, resolved_model_b, rebuttal_prompt(topic, a_open)
             )
             
             # Get rebuttal results
@@ -131,10 +142,10 @@ def run_debate_fast(
             
             # Defense (dependent on rebuttals)
             futures["a_def"] = executor.submit(
-                call_llm, MODEL_A, defense_prompt(topic, b_rebut)
+                call_llm, resolved_model_a, defense_prompt(topic, b_rebut)
             )
             futures["b_def"] = executor.submit(
-                call_llm, MODEL_B, defense_prompt(topic, a_rebut)
+                call_llm, resolved_model_b, defense_prompt(topic, a_rebut)
             )
             
             # Get defense results
@@ -148,7 +159,12 @@ def run_debate_fast(
         model_b_text = f"{b_open}\n\n{b_rebut}\n\n{b_def}"
         
         # ===== Stage 1: Fast Judge =====
-        fast_verdict = _run_fast_judge(topic, model_a_text, model_b_text)
+        fast_verdict = _run_fast_judge(
+            topic,
+            model_a_text,
+            model_b_text,
+            resolved_fast_judge,
+        )
         
         heavy_verdict = None
         auto_trigger = False
@@ -174,7 +190,10 @@ def run_debate_fast(
         # ===== Stage 2: Heavy Judge (Optional) =====
         if deep_review or auto_trigger:
             heavy_verdict = _run_heavy_judge(
-                topic, model_a_text, model_b_text
+                topic,
+                model_a_text,
+                model_b_text,
+                resolved_heavy_judge,
             )
         
         # ===== Final Result =====
@@ -195,6 +214,9 @@ def run_debate_fast(
                 "auto_heavy_judge": auto_trigger,
                 "manual_deep_review": deep_review,
                 "topic": topic,
+                "models": [resolved_model_a, resolved_model_b],
+                "fast_judge": resolved_fast_judge,
+                "heavy_judge": resolved_heavy_judge,
             },
         }
         

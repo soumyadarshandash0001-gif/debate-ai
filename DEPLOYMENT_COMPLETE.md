@@ -25,7 +25,7 @@ Your AI debate application is **fully configured** and **ready for public deploy
 - [x] All files committed to Git
 
 ### ✅ Verification
-- [x] Ollama running (LLaMA 3.2 & 3.1 models available)
+- [x] Ollama running (LLaMA 3.2, Qwen 3 VL 4B, LLaMA 3.1 8B available)
 - [x] Voice synthesis tested (working on macOS)
 - [x] FastAPI backend functional
 - [x] Streamlit UI responsive
@@ -170,7 +170,7 @@ git push origin main
 ## ✨ Features of Your App
 
 ### When Running Locally
-- 🤖 LLaMA 3.2 vs LLaMA 3.1 8B debates
+- 🤖 LLaMA 3.2 vs Qwen 3 VL 4B debates (Judge: LLaMA 3.1 8B)
 - 🗣️ Full voice playback with spinners
 - ⚖️ Judge verdict with scores
 - 💾 Download debate as text

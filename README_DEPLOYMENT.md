@@ -11,7 +11,7 @@
 
 **TriLLM Arena** is an AI-powered debate platform where multiple Large Language Models (LLMs) debate topics in real-time, with voice synthesis for immersive experience.
 
-- **🤖 Multi-LLM Debates**: LLaMA 3.2 vs LLaMA 3.1 (running on Ollama locally)
+- **🤖 Multi-LLM Debates**: LLaMA 3.2 vs Qwen 3 VL 4B (running on Ollama locally)
 - **🗣️ Voice Synthesis**: Hear models debate with different voices
 - **🔄 Iterative Rounds**: Models respond to each other round-by-round
 - **⚖️ AI Judge**: LLaMA renders final verdict with scores
@@ -124,7 +124,7 @@ Visit: **http://localhost:8503**
 | **Frontend** | Streamlit | 1.28.1 |
 | **Backend** | FastAPI | 0.104.1 |
 | **LLM Inference** | Ollama | Local |
-| **Models** | LLaMA 3.2, LLaMA 3.1 8B | Latest |
+| **Models** | LLaMA 3.2, Qwen 3 VL 4B, LLaMA 3.1 8B | Latest |
 | **Voice** | pyttsx3 + System TTS | Cross-platform |
 | **Language** | Python | 3.9+ |
 | **Hosting** | Streamlit Cloud | FREE |

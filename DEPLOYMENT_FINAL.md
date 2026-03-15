@@ -103,7 +103,7 @@
 │
 └─ Active Models
    ├─ 🔵 Model A: LLaMA 3.2
-   ├─ 🟠 Model B: LLaMA 3.1 (8B)
+   ├─ 🟠 Model B: Qwen 3 VL 4B
    └─ ⚖️ Judge: LLaMA 3.1 (8B)
 ```
 
@@ -331,7 +331,7 @@ lsof -i :11434 :8000 :8503
 FEATURE STATUS:
 ✅ Iterative Debate Engine
 ✅ Professional UI with CSS
-✅ Model Updates (LLaMA 3.2 + 3.1)
+✅ Model Updates (LLaMA 3.2 + Qwen 3 VL 4B + LLaMA 3.1 8B)
 ✅ About Project Button
 ✅ Winner Conclusion Display
 ✅ Voice Output Option

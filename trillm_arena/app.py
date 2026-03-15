@@ -23,8 +23,19 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 try:
     from trillm_arena.debate_engine import run_debate_fast, DebateError
+    from trillm_arena.model_config import get_model_config
 except ImportError:
     from debate_engine import run_debate_fast, DebateError
+    from model_config import get_model_config
+
+MODEL_CONFIG = get_model_config()
+MODEL_A_ID = MODEL_CONFIG.model_a_id
+MODEL_B_ID = MODEL_CONFIG.model_b_id
+FAST_JUDGE_ID = MODEL_CONFIG.fast_judge_id
+HEAVY_JUDGE_ID = MODEL_CONFIG.heavy_judge_id
+MODEL_A_LABEL = MODEL_CONFIG.model_a_label
+MODEL_B_LABEL = MODEL_CONFIG.model_b_label
+JUDGE_LABEL = MODEL_CONFIG.judge_label
 
 # ===== Page Configuration =====
 st.set_page_config(
@@ -105,10 +116,10 @@ with st.sidebar:
     )
     st.divider()
     st.markdown("### About")
-    st.markdown("""
+    st.markdown(f"""
     TriLLM Arena runs structured AI debates between:
-    - **Model A**: LLaMA-3.2
-    - **Model B**: LLaMA-3.1 (8B)
+    - **Model A**: {MODEL_A_LABEL}
+    - **Model B**: {MODEL_B_LABEL}
     
     Each debate includes:
     1. Opening arguments
@@ -139,7 +150,14 @@ if start_button and topic:
         try:
             with st.spinner("🔄 Running optimized debate..."):
                 logger.info(f"[MLOps] Debate started | Topic: {topic} | Author: {AUTHOR} | Session: {SESSION_ID}")
-                result = run_debate_fast(topic, deep_review=deep_review)
+                result = run_debate_fast(
+                    topic,
+                    deep_review=deep_review,
+                    model_a_id=MODEL_A_ID,
+                    model_b_id=MODEL_B_ID,
+                    fast_judge_id=FAST_JUDGE_ID,
+                    heavy_judge_id=HEAVY_JUDGE_ID,
+                )
                 
                 # MLOps tracking - log debate metrics
                 if result:
@@ -156,7 +174,7 @@ if start_button and topic:
 
             with col_a:
                 st.markdown(
-                    '<div class="debate-card"><div class="model-label">Model A — Mistral</div>',
+                    f'<div class="debate-card"><div class="model-label">Model A — {MODEL_A_LABEL}</div>',
                     unsafe_allow_html=True
                 )
                 st.markdown("**📝 Opening Argument**")
@@ -169,7 +187,7 @@ if start_button and topic:
 
             with col_b:
                 st.markdown(
-                    '<div class="debate-card"><div class="model-label">Model B — LLaMA-3</div>',
+                    f'<div class="debate-card"><div class="model-label">Model B — {MODEL_B_LABEL}</div>',
                     unsafe_allow_html=True
                 )
                 st.markdown("**📝 Opening Argument**")
@@ -215,7 +233,7 @@ if start_button and topic:
         except DebateError as e:
             logger.error(f"Debate error: {str(e)}")
             st.error(f"❌ Debate error: {str(e)}")
-            st.info("Please ensure Ollama is running with Mistral and LLaMA-3 models.")
+            st.info(f"Please ensure Ollama is running with {MODEL_A_LABEL} and {MODEL_B_LABEL} models.")
         except Exception as e:
             logger.error(f"Unexpected error: {str(e)}", exc_info=True)
             st.error(f"❌ Unexpected error: {str(e)}")
