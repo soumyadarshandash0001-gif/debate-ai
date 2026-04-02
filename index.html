@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RATIO | Distributed AI Arena</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0e14;
+            --accent: #667eea;
+            --accent-glow: rgba(102, 126, 234, 0.3);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(102, 126, 234, 0.12) 0, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(118, 75, 162, 0.12) 0, transparent 50%);
+            color: white;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+            overflow-x: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 4.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            letter-spacing: -2px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #888;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .glass-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 0 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px var(--accent-glow);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px var(--accent-glow);
+        }
+
+        button:disabled {
+            background: #333;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #status {
+            padding: 12px;
+            border-radius: 12px;
+            background: rgba(102,126,234,0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+
+        #battlefield {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 2rem;
+        }
+
+        .round-node {
+            grid-column: span 2;
+            text-align: center;
+            color: #555;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 1rem 0;
+        }
+
+        .response-card {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .response-card.model-a { border-left: 4px solid #667eea; }
+        .response-card.model-b { border-left: 4px solid #ff6b35; }
+
+        .label {
+            font-weight: bold;
+            font-size: 0.75rem;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #log {
+            margin-top: 2rem;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #444;
+            max-height: 100px;
+            overflow-y: auto;
+        }
+
+        .badge {
+            background: #667eea;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>RATIO</h1>
+        <p>Distributed Edge Node | Llama 3.2</p>
+    </div>
+
+    <div class="container">
+        <div class="glass-card">
+            <div id="status">Handshaking with WebGPU Engine...</div>
+            
+            <div class="input-group">
+                <input type="text" id="topic" placeholder="Initiate ratiocination on..." value="Will decentralized AI replace the unified cloud?">
+                <button id="activate-btn">ACTIVATE PROTOCOL</button>
+            </div>
+
+            <div id="log">READY</div>
+        </div>
+
+        <div id="battlefield">
+            <!-- Dynamic Battle Nodes -->
+        </div>
+    </div>
+
+    <script type="module">
+        import * as webllm from "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/+esm";
+
+        const topicInput = document.getElementById("topic");
+        const activateBtn = document.getElementById("activate-btn");
+        const statusDiv = document.getElementById("status");
+        const logDiv = document.getElementById("log");
+        const battlefield = document.getElementById("battlefield");
+
+        function log(msg) {
+            logDiv.innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        function createResponse(model, text) {
+            const card = document.createElement("div");
+            card.className = `response-card model-${model.toLowerCase()}`;
+            card.innerHTML = `
+                <span class="label">${model} <span class="badge">Edge Node</span></span>
+                ${text}
+            `;
+            battlefield.appendChild(card);
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+
+        function createSeparator(text) {
+            const sep = document.createElement("div");
+            sep.className = "round-node";
+            sep.textContent = `--- ${text} ---`;
+            battlefield.appendChild(sep);
+        }
+
+        activateBtn.onclick = async () => {
+            const topic = topicInput.value;
+            if (topic.length < 5) return alert("Topic too short.");
+
+            activateBtn.disabled = true;
+            activateBtn.textContent = "⚙️ LOADING AGENTS...";
+            battlefield.innerHTML = "";
+            log("Initiating Decentralized Engine...");
+
+            try {
+                const engine = await webllm.CreateMLCEngine(
+                    "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+                    { initProgressCallback: (p) => {
+                        statusDiv.textContent = `📦 Downloading Intelligent Nodes: ${Math.round(p.progress * 100)}%`;
+                        log(p.text);
+                    } }
+                );
+
+                statusDiv.textContent = "⚔️ DISTRIBUTED PROTOCOL ACTIVE";
+                activateBtn.textContent = "⚔️ RUNNING battle...";
+                log("Executing Ratiocination Cycle...");
+
+                let history = [];
+                for (let r = 0; r <= 2; r++) {
+                    createSeparator(r === 0 ? "Opening Gambit" : `Round ${r}`);
+                    
+                    // Model A
+                    const promptA = r === 0 ? `Topic: ${topic}. Give a concise opening argument.` : `Respond to this: ${history[history.length-1]}`;
+                    const resA = await engine.chat.completions.create({ messages: [{ role: "user", content: promptA }], max_tokens: 150 });
+                    createResponse("AI-A", resA.choices[0].message.content);
+                    history.push(resA.choices[0].message.content);
+
+                    if (r === 2) break;
+
+                    // Model B
+                    const promptB = `Counter: ${resA.choices[0].message.content}`;
+                    const resB = await engine.chat.completions.create({ messages: [{ role: "user", content: promptB }], max_tokens: 150 });
+                    createResponse("AI-B", resB.choices[0].message.content);
+                    history.push(resB.choices[0].message.content);
+                }
+
+                statusDiv.textContent = "✅ RATIOCINATION COMPLETED ON LOCAL HARDWARE";
+                activateBtn.textContent = "RESET PROTOCOL";
+                activateBtn.disabled = false;
+                log("Protocol Conclusion reached.");
+
+            } catch (err) {
+                log(`!! ERROR: ${err.message}`);
+                statusDiv.textContent = "❌ INCOMPATIBLE HARDWARE. USE CHROME/EDGE/SAFARI.";
+                activateBtn.disabled = false;
+                activateBtn.textContent = "RETRY ACTIVATION";
+            }
+        };
+    </script>
+</body>
+</html>
