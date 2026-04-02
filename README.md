@@ -28,6 +28,13 @@ A sophisticated debate engine that orchestrates structured arguments between mul
 
 ## Architecture
 
+<img width="1470" height="956" alt="Screenshot 2026-03-15 at 11 03 20 PM" src="https://github.com/user-attachments/assets/09f8941f-1993-4289-ae7d-fff2c97f70c2" />
+
+
+
+
+
+
 ```
 ┌─────────────────────┐
 │   Streamlit UI      │  Web Interface
@@ -449,3 +456,8 @@ OLLAMA_DEBUG=0          # Set to 1 for debugging
 - [ ] Custom judge models
 - [ ] Multi-GPU support
 - [ ] Quantization support for smaller models
+
+<img width="1470" height="956" alt="Screenshot 2026-03-15 at 11 03 20 PM" src="https://github.com/user-attachments/assets/e2efb923-84d6-4eec-838c-40f65c8efd24" />
+
+
+
