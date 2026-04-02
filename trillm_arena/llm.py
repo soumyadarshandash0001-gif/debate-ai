@@ -95,16 +95,28 @@ def call_llm(
     """
     
     # Heuristic: If we are in 'production' (Cloud environment) we MUST use API
-    # Streamlit Cloud sets specific env vars, but we'll check for API key
-    is_cloud = os.getenv("STREAMLIT_RUNTIME_ID") is not None or os.getenv("IS_PRODUCTION", "false").lower() == "true"
+    # Streamlit Cloud sets specific env vars, but we'll also check if local Ollama is likely missing
+    is_cloud_env = os.getenv("STREAMLIT_RUNTIME_ID") is not None or os.getenv("IS_PRODUCTION", "true").lower() == "true"
     
-    if is_cloud:
+    # If we have an API key and are in a cloud-ish environment, OR if we explicitly want production mode
+    # Default to Cloud if OpenRouter key is set, as it's the safest bet for production stability
+    use_cloud = (is_cloud_env or os.getenv("OPENROUTER_API_KEY") is not None)
+    
+    if use_cloud:
+        # Check if we have the key
         if not OPENROUTER_API_KEY:
-            raise LLMError(
-                "In Production (Cloud), you must provide OPENROUTER_API_KEY "
-                "to run Llama/Qwen models since Ollama is not available."
-            )
-        return call_openrouter(model, prompt, max_tokens, temperature)
+            # If no key, maybe we are local after all? Let's check Ollama
+            try:
+                # Quick check if Ollama is responsive
+                requests.get(OLLAMA_URL.replace("/api/generate", ""), timeout=1)
+                logger.info("No OpenRouter key found, falling back to local Ollama")
+            except:
+                raise LLMError(
+                    "In Production (Cloud), you must provide OPENROUTER_API_KEY "
+                    "to run Llama/Qwen models since Ollama is not available."
+                )
+        else:
+            return call_openrouter(model, prompt, max_tokens, temperature)
 
     # Local Ollama Implementation
     payload = {

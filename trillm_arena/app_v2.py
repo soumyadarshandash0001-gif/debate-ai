@@ -287,7 +287,14 @@ with tab_arena:
                 placeholder.empty()
                 
                 # Display Results
-                st.markdown(f"### 🏆 Final Verdict: {json.loads(result['verdict']).get('winner', 'TIE')}")
+                verdict_raw = result.get('verdict', '{}')
+                try:
+                    verdict_json = json.loads(verdict_raw)
+                    winner_val = verdict_json.get('winner', 'TIE')
+                except:
+                    winner_val = "EVALUATED"
+
+                st.markdown(f"### 🏆 Final Verdict: {winner_val}")
                 
                 # Display Metrics
                 m_col1, m_col2, m_col3 = st.columns(3)
@@ -332,16 +339,24 @@ with tab_gallery:
     else:
         for d in recent_debates:
             with st.container():
+                # Safe extraction of fields
+                t_topic = d.get('topic', 'Untitled Debate')
+                t_winner = d.get('winner', 'TIE')
+                t_reasoning = d.get('reasoning', 'No reasoning provided.')
+                t_created = d.get('created_at', 'Long ago')[:19].replace('T', ' ')
+                t_ma = d.get('model_a', 'AI-A')
+                t_mb = d.get('model_b', 'AI-B')
+
                 st.markdown(f"""
                     <div class="glass-card">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <h4 style="margin:0;">{d['topic']}</h4>
-                            <span class="badge badge-primary">WINNER: {d.get('winner', 'TIE')}</span>
+                            <h4 style="margin:0;">{t_topic}</h4>
+                            <span class="badge badge-primary">WINNER: {t_winner}</span>
                         </div>
                         <p style="color:#666; font-size:0.9rem; margin-top:8px;">
-                            {d.get('reasoning', '')[:200]}...
+                            {t_reasoning[:200]}...
                         </p>
-                        <small style="color:#444;">{d['created_at'][:19].replace('T', ' ')} | vs {d['model_a']} and {d['model_b']}</small>
+                        <small style="color:#444;">{t_created} | vs {t_ma} and {t_mb}</small>
                     </div>
                 """, unsafe_allow_html=True)
 
