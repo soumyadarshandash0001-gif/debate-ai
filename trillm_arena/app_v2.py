@@ -409,10 +409,10 @@ with st.sidebar:
     # Cloud Status
     st.sidebar.markdown("### ☁️ Cloud Status")
     import os
-    if os.getenv("GEMINI_API_KEY") and "your_gemini" not in os.getenv("GEMINI_API_KEY"):
-        st.sidebar.success("✅ Gemini API Active")
+    if os.getenv("OPENROUTER_API_KEY") and "your_openrouter" not in os.getenv("OPENROUTER_API_KEY"):
+        st.sidebar.success("✅ OpenRouter API Active")
     else:
-        st.sidebar.warning("⚠️ Gemini API Key Missing")
+        st.sidebar.warning("⚠️ OpenRouter Key Missing")
 
     if os.getenv("SUPABASE_URL") and "your_supabase" not in os.getenv("SUPABASE_URL"):
         st.sidebar.success("✅ Supabase Integrated")
