@@ -1,30 +1,45 @@
-# ⚡ TriLLM Arena - Production-Grade Multi-LLM Debate Engine
+# ⚖️ RATIO - The Ratiocination Arena
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://ratiotrillm.streamlit.app/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Stars](https://img.shields.io/github/stars/soumyadarshandash/trillm-arena?style=social)](https://github.com/soumyadarshandash/trillm-arena)
-[![GitHub Release](https://img.shields.io/github/v/release/soumyadarshandash/trillm-arena)](https://github.com/soumyadarshandash/trillm-arena/releases)
-[![CI/CD Pipeline](https://github.com/soumyadarshandash/trillm-arena/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/soumyadarshandash/trillm-arena/actions)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Docker Ready](https://img.shields.io/badge/docker-ready-blue.svg)](https://www.docker.com/)
-[![FastAPI](https://img.shields.io/badge/fastapi-0.104+-green.svg)](https://fastapi.tiangolo.com/)
-[![Streamlit](https://img.shields.io/badge/streamlit-1.28+-red.svg)](https://streamlit.io/)
 
-**Author**: [Soumyadarshan Dash](https://github.com/soumyadarshandash)  
-**License**: MIT  
-**Status**: Production Ready ✅
+**Zero-Cost, Cloudless AI Debate Engine.**
 
-A sophisticated debate engine that orchestrates structured arguments between multiple AI models, featuring parallel execution, intelligent judging, and both REST API and web UI interfaces.
+RATIO is a high-performance debate orchestration platform that runs entirely for free by leveraging:
+- **Streamlit Cloud** for global accessibility.
+- **Supabase** for a secure, zero-latency task queue.
+- **Local GPUs (Ollama)** for private, zero-cost inference.
+- **WebGPU (Browser Inference)** for decentralized intelligence.
 
-## Features
+---
 
-- **🚀 Parallel Debate Execution**: Models debate simultaneously for faster results
-- **⚖️ Two-Tier Judgment System**: Fast judge + optional heavy judge for nuanced decisions
-- **🎯 Auto-Detection**: Automatically triggers deep review when debate scores are close
-- **🔌 REST API**: FastAPI-based production-grade API with OpenAPI documentation
-- **🎨 Beautiful Web UI**: Streamlit-based responsive interface with professional styling
-- **📊 Comprehensive Logging**: Structured logging for monitoring and debugging
-- **🐳 Docker Support**: Multi-stage Docker builds and docker-compose orchestration
-- **⚙️ Production Ready**: Error handling, validation, timeouts, and health checks
+## 🚀 Live Demo: [ratiotrillm.streamlit.app](https://ratiotrillm.streamlit.app/)
+
+---
+
+## 🏗️ Technical Architecture
+
+RATIO uses a **Hybrid Cloud-Local** model to eliminate API costs:
+
+```mermaid
+graph TD
+    User[User Browser] -- "WebGPU" --> Edge[Local LLM in Browser]
+    User -- "Request" --> Streamlit[Streamlit Cloud]
+    Streamlit -- "Queue Task" --> Supabase[Supabase Task Queue]
+    Supabase -- "Poll" --> Local[Local Worker / Your GPU]
+    Local -- "Run Inference" --> Ollama[Ollama Server]
+    Local -- "Push Result" --> Supabase
+    Streamlit -- "Fetch Result" --> Supabase
+```
+
+---
+
+## 📦 Features
+
+- **⚡ Edge Mode**: Run Llama 3.2 directly in your browser via WebGPU. $0 cost, 100% privacy.
+- **⚔️ Battle Arena**: Multi-round debates with intelligent judging.
+- **🎬 Live Gallery**: Persistent archive of every intelligence battle.
+- **📊 Leaderboards**: Track which models (Llama 3.1 vs 3.2) are dominating.
 
 ## Architecture
 

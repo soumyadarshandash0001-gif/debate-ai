@@ -1,368 +1,107 @@
-# 🎯 FINAL DEPLOYMENT SUMMARY - TriLLM Arena v2.0
+# 🚀 Zero-Cost Cloudless Deployment Guide
 
-## ✅ ALL UPDATES COMPLETE
+This guide ensures your **RATIO (TriLLM Arena)** is accessible globally for **$0/month** by combining free cloud services with your local hardware.
 
-### **Live Application**: http://localhost:8503 ✨
-
----
-
-## 🎉 NEW FEATURES IMPLEMENTED
-
-### 1️⃣ About Project Button
-- **Location**: Sidebar (left panel)
-- **Label**: "ℹ️ About Project"
-- **Content**: Project info, features, author, license, GitHub link
-- **Interaction**: Click to expand/collapse
-
-### 2️⃣ Winner Debate Conclusion
-- **Display**: Golden gradient card
-- **Content**: Winner's final response from debate
-- **Position**: Before judge's verdict section
-- **Styling**: Professional with clear visual prominence
-
-### 3️⃣ Voice Option for Conclusion
-- **Button**: "🔊 Speak Conclusion"
-- **Activation**: Click-only (no auto-play)
-- **Text**: "The judge declares [WINNER] as the winner. [REASONING]"
-- **Platform Support**:
-  - ✅ macOS: Automatic (uses `say` command)
-  - ⭕ Windows: Optional (needs `pip install pyttsx3`)
-  - ⭕ Linux: Optional (needs `sudo apt-get install espeak`)
-
-### 4️⃣ Debate Summary Section
-- **Type**: Expandable view
-- **Content**: Complete debate details
-- **Download**: "📥 Download Summary" button
-- **Format**: .txt file with timestamp
+## 🏗️ The Hybrid Architecture
+1. **Frontend**: [Streamlit Community Cloud](https://share.streamlit.io/) (Free Hosting)
+2. **Task Queue**: [Supabase](https://supabase.com/) (Free Database)
+3. **Inference Engine**: Your Local GPU (Ollama)
+4. **Browser Inference**: [WebLLM](https://webllm.mlc-ai.org/) (Runs in user's browser via WebGPU)
 
 ---
 
-## 🌐 DEPLOYMENT LINKS
+## 🛠️ Step 1: Initialize Supabase (One-Time Setup)
+1. Create a free account at [Supabase](https://supabase.com/).
+2. Create a new project.
+3. In the **SQL Editor**, run the following to create the required tables:
 
-| Service | URL | Status |
-|---------|-----|--------|
-| **Professional UI v2** | http://localhost:8503 | 🟢 RUNNING |
-| API Server | http://localhost:8000 | 🟢 RUNNING |
-| API Documentation | http://localhost:8000/docs | 🟢 ACTIVE |
-| Ollama Backend | http://localhost:11434 | 🟢 RUNNING |
+```sql
+-- 1. Debates Table (Archive)
+create table debates (
+  id uuid primary key default uuid_generate_v4(),
+  created_at timestamp with time zone default now(),
+  topic text not null,
+  model_a text,
+  model_b text,
+  rounds int,
+  verdict text,
+  winner text,
+  reasoning text,
+  scores jsonb,
+  num_rounds int
+);
 
----
+-- 2. Debate Requests Table (Task Queue)
+create table debate_requests (
+  id uuid primary key default uuid_generate_v4(),
+  created_at timestamp with time zone default now(),
+  topic text not null,
+  rounds int default 3,
+  models text[],
+  status text default 'pending', -- pending, processing, completed, failed
+  result_id uuid references debates(id)
+);
 
-## 📋 RESULTS PAGE LAYOUT (NEW ORDER)
+-- Enable public read if you want a public leaderboard
+alter table debates enable row level security;
+create policy "Public Read" on debates for select using (true);
+create policy "Public Insert" on debates for insert with check (true);
 
-```
-1. Header & Branding
-   └─ TriLLM Arena v2.0
-
-2. Input Section
-   ├─ Topic entry field
-   └─ Round selector (1-5)
-
-3. Debate Progression
-   ├─ Round 0 (Opening)
-   ├─ Round 1 (Iterative)
-   ├─ Round 2 (Iterative)
-   └─ Round 3 (Iterative)
-
-4. 🏆 WINNER CONCLUSION ⭐ NEW
-   └─ Golden card with winner's final statement
-
-5. ⚖️ JUDGE VERDICT
-   ├─ Winner announcement
-   └─ Reasoning
-
-6. 📈 SCORES
-   ├─ Model A: X/10
-   └─ Model B: Y/10
-
-7. 🎙️ VOICE CONCLUSION ⭐ NEW
-   ├─ Preview text
-   └─ Speaker button (click to activate)
-
-8. 📋 SUMMARY ⭐ NEW
-   ├─ Expandable full summary
-   └─ Download button
+alter table debate_requests enable row level security;
+create policy "Anyone can create requests" on debate_requests for insert with check (true);
+create policy "Anyone can check status" on debate_requests for select using (true);
+create policy "Worker can update" on debate_requests for update using (true);
 ```
 
 ---
 
-## 🎨 SIDEBAR CONFIGURATION
-
-**Left Panel Updates:**
-```
-⚙️ Configuration
-├─ Debate Rounds (slider 1-5)
-│
-├─ Metrics Section
-│  ├─ Version: 2.0.0
-│  ├─ Status: 🟢 Live
-│  └─ Author: Dash
-│
-├─ ℹ️ About Project Button ⭐ NEW
-│  └─ Expandable project info
-│
-└─ Active Models
-   ├─ 🔵 Model A: LLaMA 3.2
-   ├─ 🟠 Model B: Qwen 3 VL 4B
-   └─ ⚖️ Judge: LLaMA 3.1 (8B)
-```
+## 🛠️ Step 2: Deploy Frontend (Streamlit Cloud)
+1. Push your code to GitHub:
+   ```bash
+   git push origin main
+   ```
+2. Go to [share.streamlit.io](https://share.streamlit.io/).
+3. Connect your GitHub repository:
+   - **Repository**: `soumyadarshandash0001-gif/debate-ai`
+   - **Branch**: `main`
+   - **Main file path**: `streamlit_app.py`
+4. Click **Advanced Settings** and add your **Secrets**:
+   ```toml
+   SUPABASE_URL = "https://your-project.supabase.co"
+   SUPABASE_KEY = "your-anon-key"
+   IS_PRODUCTION = "true"
+   # Optional: Add OPENROUTER_API_KEY if you want paid cloud fallback
+   ```
 
 ---
 
-## 🎙️ VOICE ACTIVATION
+## 🛠️ Step 3: Run the Local Worker (Your GPU)
+This script connects your local machine to the cloud. When a user requests a debate on your website, this worker will run it locally and push the result back.
 
-**How It Works:**
-1. Run debate to completion
-2. Scroll to "🎙️ Voice Conclusion" section
-3. See text preview
-4. Click "🔊 Speak Conclusion" button
-5. System speaks the verdict (no sound if unsupported)
-
-**Text Format:**
-```
-"The judge declares [WINNER] as the winner. [REASONING]"
-
-Example:
-"The judge declares Model A as the winner. Model A demonstrated 
-superior logical consistency and factual accuracy."
-```
-
----
-
-## 📥 DOWNLOAD SUMMARY
-
-**How It Works:**
-1. Complete debate runs
-2. Scroll to "📋 Complete Debate Summary"
-3. Click "View Full Summary" to expand
-4. Click "📥 Download Summary"
-5. File saves as: `debate_summary_YYYYMMDD_HHMMSS.txt`
-
-**File Contents:**
-- Topic
-- Debate format (iterative rounds)
-- Models used
-- Winner announcement
-- Scores
-- Judge's reasoning
-- Conclusion
+1. Ensure **Ollama** is running and models are pulled:
+   ```bash
+   ollama pull llama3.2  # Model A
+   ollama pull llama3.1  # Judge
+   ```
+2. Set environment variables in your terminal:
+   ```bash
+   export SUPABASE_URL="your-supabase-url"
+   export SUPABASE_KEY="your-supabase-key"
+   ```
+3. Start the worker:
+   ```bash
+   python trillm_arena/local_worker.py
+   ```
 
 ---
 
-## 📝 FILES MODIFIED
+## 🌐 How People Access It
+- Give them your URL: `https://ratiotrillm.streamlit.app/`
+- **Option A (Lightning Fast)**: They use the **⚡ Edge Node** tab. It runs models directly in their browser (No servers needed!).
+- **Option B (High Quality)**: They use the **⚔️ Battle Arena**. Your local machine will process the request in the background.
 
-```
-trillm_arena/app_v2.py (UPDATED)
-├─ Added subprocess import for voice
-├─ Enhanced sidebar with About button
-├─ Added winner conclusion section
-├─ Added voice output button
-├─ Added debate summary section
-├─ Added download functionality
-└─ Improved verdict display
-```
-
----
-
-## ✨ VERIFICATION CHECKLIST
-
-- ✅ Syntax validation passed
-- ✅ All features implemented
-- ✅ App running on port 8503
-- ✅ About button functional
-- ✅ Winner conclusion displays
-- ✅ Voice button click-activated
-- ✅ Summary expandable
-- ✅ Download working
-- ✅ Mobile responsive
-- ✅ Color scheme applied
-- ✅ Services running:
-  - ✅ Ollama (port 11434)
-  - ✅ FastAPI (port 8000)
-  - ✅ Streamlit UI (port 8503)
-
----
-
-## 🚀 QUICK START
-
-**Step 1**: Open browser
-```
-http://localhost:8503
-```
-
-**Step 2**: Explore project info
-```
-Click "ℹ️ About Project" in sidebar
-```
-
-**Step 3**: Start a debate
-```
-1. Enter topic
-2. Select rounds (1-5)
-3. Click "🚀 Start Debate"
-```
-
-**Step 4**: View results
-```
-1. See iterative rounds
-2. Read winner conclusion (golden card)
-3. Check judge's verdict
-4. Click "🔊 Speak Conclusion" to hear verdict
-5. Download summary
-```
-
----
-
-## 🎯 EXAMPLE WORKFLOW
-
-**Topic:** "Should AI regulation be government-led?"
-
-**Process:**
-```
-Opening Round:
-  Model A: [opening statement]
-  Model B: [opening statement]
-
-Round 1:
-  Model A: [response to Model B]
-  Model B: [response to Model A]
-
-Round 2:
-  Model A: [response to Model B]
-  Model B: [response to Model A]
-
-Round 3:
-  Model A: [response to Model B]
-  Model B: [response to Model A]
-
-Winner Conclusion:
-  [Winner's final statement in golden card]
-
-Judge's Verdict:
-  Winner: Model A
-  Reasoning: [Judge's analysis]
-
-Scores:
-  Model A: 8/10
-  Model B: 6/10
-
-Voice Option:
-  "The judge declares Model A as the winner. Model A demonstrated..."
-  [CLICK BUTTON TO HEAR]
-
-Summary Download:
-  debate_summary_20260213_170315.txt
-```
-
----
-
-## 💡 SIDEBAR "ABOUT PROJECT" CONTENT
-
-```
-TriLLM Arena v2.0
-Production-Grade Multi-LLM Debate Engine
-
-About:
-A sophisticated debate platform that orchestrates 
-structured arguments between multiple AI models with 
-iterative exchanges, intelligent judging, and 
-professional web interface.
-
-Features:
-- 🔄 Iterative debate rounds
-- ⚖️ Expert judge evaluation
-- 🎙️ Voice output for conclusions
-- 📊 Real-time scoring
-- 🎨 Professional UI
-
-Author: Soumyadarshan Dash
-License: MIT
-Status: Production Ready ✅
-
-GitHub: [Link to repository]
-```
-
----
-
-## 🔧 SYSTEM REQUIREMENTS
-
-**Core (Already installed):**
-- ✅ Python 3.9+
-- ✅ Streamlit
-- ✅ FastAPI
-- ✅ Requests
-
-**Voice Support (Platform-dependent):**
-- macOS: Built-in `say` command ✅
-- Windows: `pip install pyttsx3` (optional)
-- Linux: `sudo apt-get install espeak` (optional)
-
----
-
-## 🆘 TROUBLESHOOTING
-
-**App won't load:**
-```bash
-cd "/Users/soumyadarshandash/debate ai"
-source .venv/bin/activate
-streamlit run trillm_arena/app_v2.py --server.port 8503
-```
-
-**Voice not working:**
-- macOS: Should work automatically
-- Windows: Install `pyttsx3` if needed
-- Linux: Install `espeak` if needed
-- Other: Click button shows helpful warning
-
-**Services down:**
-```bash
-# Restart Ollama
-ollama serve
-
-# Check all ports
-lsof -i :11434 :8000 :8503
-```
-
----
-
-## 📊 STATUS
-
-```
-FEATURE STATUS:
-✅ Iterative Debate Engine
-✅ Professional UI with CSS
-✅ Model Updates (LLaMA 3.2 + Qwen 3 VL 4B + LLaMA 3.1 8B)
-✅ About Project Button
-✅ Winner Conclusion Display
-✅ Voice Output Option
-✅ Debate Summary & Download
-✅ Production Ready
-
-SERVICES STATUS:
-🟢 Ollama LLM Server
-🟢 FastAPI Backend
-🟢 Streamlit UI v2.0
-🟢 All Models Available
-🟢 All Systems Running
-
-DEPLOYMENT STATUS:
-✅ Local: http://localhost:8503
-✅ API: http://localhost:8000
-✅ Ready for Use
-```
-
----
-
-## 🎉 FINAL DEPLOYMENT
-
-### **Your Application is LIVE at:**
-
-# 🌐 http://localhost:8503 ✨
-
-**Everything is complete, tested, and ready!**
-
----
-
-**Date:** 13 February 2026  
-**Version:** 2.0.0  
-**Status:** ✅ Production Ready
+## ✅ Verification Checklist
+- [ ] Supabase Tables Created
+- [ ] Streamlit Cloud Secrets configured
+- [ ] `local_worker.py` running on your laptop/PC
+- [ ] GitHub repository in sync
