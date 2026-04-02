@@ -263,64 +263,74 @@ with tab_arena:
             st.warning("⚠️ Topic requires at least 3 characters.")
         else:
             try:
-                placeholder = st.empty()
-                with placeholder.container():
-                    st.info("🔬 **Orchestrating Model Agents...**")
-                    progress = st.progress(0)
-                    for i in range(100):
-                        time.sleep(0.01)
-                        progress.progress(i + 1)
+                # 🛠️ HYBRID LOGIC
+                is_prod = os.getenv("IS_PRODUCTION", "true").lower() == "true"
+                has_api = os.getenv("OPENROUTER_API_KEY") is not None
                 
-                # Execute Debate
-                start_time = time.time()
-                result = run_iterative_debate(
-                    topic,
-                    num_rounds=rounds,
-                    model_a_id=MODEL_A_ID,
-                    model_b_id=MODEL_B_ID,
-                    judge_id=JUDGE_ID,
-                )
-                latency = time.time() - start_time
+                # If we're on cloud AND don't have an API key, we use the LOCAL WORKER QUEUE
+                if is_prod and not has_api:
+                    st.info("📡 **No API Key detected. Routing to Private Local Node...**")
+                    
+                    req_id = db.create_debate_request(topic, rounds, [MODEL_A_ID, MODEL_B_ID])
+                    
+                    if req_id:
+                        placeholder = st.empty()
+                        with placeholder.container():
+                            st.warning(f"⏳ **Request Queued (ID: {req_id})**")
+                            st.caption("A local machine (using your Ollama) must be running `local_worker.py` to process this.")
+                            
+                            # Polling loop
+                            status_label = st.empty()
+                            progress = st.progress(0)
+                            
+                            for i in range(120): # Timeout after 10 minutes (5s * 120)
+                                status = db.check_request_status(req_id)
+                                current_s = status.get('status') if status else 'pending'
+                                
+                                if current_s == 'processing':
+                                    status_label.info("⚔️ **Model Node Active: Running Llama 3.1 & 3.2...**")
+                                    progress.progress(50)
+                                elif current_s == 'completed' or current_s == 'finished':
+                                    status_label.success("✅ **Debate Complete! Loading results...**")
+                                    progress.progress(100)
+                                    time.sleep(2)
+                                    st.rerun() # Gallery will show it
+                                    break
+                                elif current_s == 'failed':
+                                    status_label.error("❌ **Local Node Error.** Check your logs.")
+                                    break
+                                else:
+                                    status_label.caption(f"Waiting for your local node to pick up request... (Attempt {i+1}/120)")
+                                    progress.progress(min((i+1)/120, 0.45))
+                                
+                                time.sleep(5)
+                    else:
+                        st.error("Could not register request. Is Supabase synchronized?")
                 
-                # Persistence
-                db.save_debate(result)
-                placeholder.empty()
+                else:
+                    # DIRECT EXECUTION (Local or OpenRouter)
+                    placeholder = st.empty()
+                    with placeholder.container():
+                        st.info("🔬 **Orchestrating Model Agents...**")
+                        progress = st.progress(0)
                 
-                # Display Results
-                verdict_raw = result.get('verdict', '{}')
-                try:
-                    verdict_json = json.loads(verdict_raw)
-                    winner_val = verdict_json.get('winner', 'TIE')
-                except:
-                    winner_val = "EVALUATED"
-
-                st.markdown(f"### 🏆 Final Verdict: {winner_val}")
-                
-                # Display Metrics
-                m_col1, m_col2, m_col3 = st.columns(3)
-                m_col1.metric("Latency", f"{latency:.2f}s")
-                m_col2.metric("Rounds", f"{len(result['rounds'])}")
-                m_col3.metric("Tokens", f"~{len(str(result)):,}")
-                
-                # Rounds View
-                for rd in result['rounds']:
-                    with st.expander(f"Round {rd['round']}: {rd['type'].title()}", expanded=(rd['round'] == 0)):
-                        ca, cb = st.columns(2)
-                        with ca:
-                            st.markdown(f"**🔵 {MODEL_A_LABEL}**")
-                            st.write(rd['model_a'])
-                        with cb:
-                            st.markdown(f"**🟠 {MODEL_B_LABEL}**")
-                            st.write(rd['model_b'])
-
-                # Conclusion
-                verdict = json.loads(result['verdict'])
-                st.markdown(f"""
-                    <div class="glass-card">
-                        <h4 style="color:#667eea">⚖️ Judicial Reasoning</h4>
-                        <p style="color:#888">{verdict.get('reasoning')}</p>
-                    </div>
-                """, unsafe_allow_html=True)
+                    # Execute Debate
+                    start_time = time.time()
+                    result = run_iterative_debate(
+                        topic,
+                        num_rounds=rounds,
+                        model_a_id=MODEL_A_ID,
+                        model_b_id=MODEL_B_ID,
+                        judge_id=JUDGE_ID,
+                    )
+                    latency = time.time() - start_time
+                    
+                    # Persistence
+                    db.save_debate(result)
+                    placeholder.empty()
+                    
+                    # Force Rerun to refresh Gallery/Stats
+                    st.rerun()
 
             except Exception as e:
                 st.error(f"Execution Error: {str(e)}")

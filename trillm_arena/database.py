@@ -61,6 +61,59 @@ class Database:
             logger.error(f"Error saving debate to Supabase: {str(e)}")
             return False
 
+    # --- ADVANCED: Task Queue for Local-Cloud Hybrid ---
+    def create_debate_request(self, topic: str, rounds: int, models: list) -> Optional[str]:
+        """Create a pending request for local models to process."""
+        if not self.client: return None
+        try:
+            payload = {
+                "topic": topic,
+                "rounds": rounds,
+                "models": models,
+                "status": "pending",
+                "created_at": "now()"
+            }
+            res = self.client.table("debate_requests").insert(payload).execute()
+            return res.data[0]['id'] if res.data else None
+        except Exception as e:
+            logger.error(f"Failed to create request: {e}")
+            return None
+
+    def get_pending_request(self) -> Optional[Dict]:
+        """Local worker calls this to see if there is any work to do."""
+        if not self.client: return None
+        try:
+            res = self.client.table("debate_requests")\
+                .select("*")\
+                .eq("status", "pending")\
+                .order("created_at")\
+                .limit(1)\
+                .execute()
+            return res.data[0] if res.data else None
+        except Exception as e:
+            logger.error(f"Error fetching pending: {e}")
+            return None
+
+    def update_request_status(self, request_id: str, status: str, result_id: str = None):
+        """Update the status of a request."""
+        if not self.client: return
+        try:
+            payload = {"status": status}
+            if result_id: payload["result_id"] = result_id
+            self.client.table("debate_requests").update(payload).eq("id", request_id).execute()
+        except Exception as e:
+            logger.error(f"Error updating request: {e}")
+
+    def check_request_status(self, request_id: str) -> Optional[Dict]:
+        """App UI calls this to see if the local worker finished."""
+        if not self.client: return None
+        try:
+            res = self.client.table("debate_requests").select("*").eq("id", request_id).execute()
+            return res.data[0] if res.data else None
+        except Exception as e:
+            logger.error(f"Error checking status: {e}")
+            return None
+
     def get_recent_debates(self, limit: int = 5) -> list:
         """Fetch recent debates for the gallery."""
         if not self.client:
