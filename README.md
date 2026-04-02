@@ -28,8 +28,9 @@ A sophisticated debate engine that orchestrates structured arguments between mul
 
 ## Architecture
 
-<img width="1470" height="956" alt="Screenshot 2026-03-15 at 11 03 20 PM" src="https://github.com/user-attachments/assets/09f8941f-1993-4289-ae7d-fff2c97f70c2" />
 
+
+![Uploading Screenshot 2026-03-15 at 11.07.02 PM.png…]()
 
 
 
