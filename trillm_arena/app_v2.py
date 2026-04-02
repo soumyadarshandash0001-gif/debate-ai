@@ -23,9 +23,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# MLOps Tracking
-AUTHOR = "Soumyadarshan Dash"
-VERSION = "2.0.0"
+# Startup Metadata
+BRAND_NAME = "RATIO"
+TAGLINE = "The Ratiocination Arena"
+VERSION = "3.0.0"
 SESSION_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Add parent directory to path
@@ -82,657 +83,298 @@ def speak_text(text: str, model: str = "A") -> bool:
 
 # ===== Page Configuration =====
 st.set_page_config(
-    page_title="TriLLM Arena v2",
-    page_icon="⚡",
+    page_title=f"{BRAND_NAME} | {TAGLINE}",
+    page_icon="⚖️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# ===== PROFESSIONAL CSS =====
+# ===== STARTUP GRADE CSS (Glassmorphism & Professional Dark Mode) =====
 st.markdown("""
     <style>
-    /* Color Palette */
-    :root {
-        --primary: #0066cc;
-        --secondary: #ff6b35;
-        --success: #00b894;
-        --warning: #ffa502;
-        --danger: #ee5a6f;
-        --dark: #2f3542;
-        --light: #f5f6fa;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700;900&display=swap');
     
-    /* Main Layout */
-    .main {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        padding: 2rem;
+    html, body, [class*="css"] {
+        font-family: 'Outfit', sans-serif;
     }
-    
-    /* Header Styling */
-    .header-container {
-        text-align: center;
-        padding: 2rem 0;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 15px;
-        color: white;
-        margin-bottom: 2rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+    /* Modern Dark Theme */
+    .stApp {
+        background-color: #0b0e14;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(102, 126, 234, 0.1) 0, transparent 50%),
+            radial-gradient(at 100% 100%, rgba(118, 75, 162, 0.1) 0, transparent 50%);
     }
-    
-    .header-container h1 {
-        font-size: 3rem;
-        margin: 0;
-        font-weight: 900;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-    }
-    
-    .header-container p {
-        margin: 0.5rem 0 0 0;
-        font-size: 1.2rem;
-        opacity: 0.95;
-    }
-    
-    /* Input Section */
-    .input-section {
-        background: white;
-        padding: 2rem;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        margin-bottom: 2rem;
-    }
-    
-    /* Metric Cards */
-    .metric-row {
-        display: flex;
-        gap: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .metric-card {
-        flex: 1;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    /* Glassmorphism Cards */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
         padding: 1.5rem;
-        border-radius: 10px;
-        color: white;
+        margin-bottom: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .glass-card:hover {
+        border-color: rgba(102, 126, 234, 0.4);
+        transform: translateY(-2px);
+    }
+
+    /* Header Styling */
+    .startup-header {
         text-align: center;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        padding: 3rem 0;
+        margin-bottom: 2rem;
     }
     
-    .metric-card h4 {
-        margin: 0 0 0.5rem 0;
-        font-size: 0.9rem;
-        opacity: 0.95;
+    .startup-header h1 {
+        font-size: 5rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -2px;
+        margin-bottom: 0;
     }
     
-    .metric-card .value {
-        font-size: 1.8rem;
+    .startup-header p {
+        font-size: 1.4rem;
+        color: #888;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    /* Round Badges */
+    .badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
         font-weight: bold;
     }
     
-    /* Round Container */
-    .round-container {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
-        border-left: 5px solid #667eea;
+    .badge-primary { background: rgba(102, 126, 234, 0.2); color: #667eea; border: 1px solid #667eea; }
+    .badge-secondary { background: rgba(255, 107, 53, 0.2); color: #ff6b35; border: 1px solid #ff6b35; }
+    .badge-success { background: rgba(0, 184, 148, 0.2); color: #00b894; border: 1px solid #00b894; }
+
+    /* Custom Input */
+    .stTextInput input {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 12px !important;
+        color: white !important;
+        padding: 1rem !important;
     }
-    
-    .round-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid #f0f0f0;
-    }
-    
-    .round-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #2f3542;
-    }
-    
-    .round-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 600;
-    }
-    
-    /* Model Response Cards */
-    .model-response {
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        border-left: 4px solid;
-    }
-    
-    .model-a {
-        border-left-color: #0066cc;
-    }
-    
-    .model-b {
-        border-left-color: #ff6b35;
-    }
-    
-    .model-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1rem;
-    }
-    
-    .model-label {
-        font-size: 1rem;
-        font-weight: 700;
-        margin-right: 1rem;
-    }
-    
-    .model-label.a {
-        color: #0066cc;
-    }
-    
-    .model-label.b {
-        color: #ff6b35;
-    }
-    
-    .model-badge {
-        background: #e3f2fd;
-        color: #0066cc;
-        padding: 0.3rem 0.8rem;
-        border-radius: 15px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-    
-    .model-badge.b {
-        background: #fff3e0;
-        color: #ff6b35;
-    }
-    
-    .model-text {
-        font-size: 1rem;
-        line-height: 1.6;
-        color: #2f3542;
-    }
-    
-    /* Verdict Section */
-    .verdict-section {
-        background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        color: white;
-        padding: 2rem;
-        border-radius: 12px;
-        margin-top: 2rem;
-        box-shadow: 0 8px 25px rgba(17, 153, 142, 0.3);
-    }
-    
-    .verdict-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-    }
-    
-    .verdict-content {
-        background: rgba(255, 255, 255, 0.1);
-        padding: 1.5rem;
-        border-radius: 8px;
-        backdrop-filter: blur(10px);
-    }
-    
-    .winner-announce {
-        font-size: 1.3rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        padding-bottom: 1rem;
-        border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-    }
-    
-    .verdict-reasoning {
-        font-size: 1rem;
-        line-height: 1.7;
-        opacity: 0.95;
-    }
-    
-    /* Loading State */
-    .loading-spinner {
-        text-align: center;
-        padding: 2rem;
-    }
-    
-    /* Error State */
-    .error-box {
-        background: #ffe3e3;
-        color: #c92a2a;
-        padding: 1.5rem;
-        border-radius: 10px;
-        border-left: 4px solid #c92a2a;
-        margin: 1rem 0;
-    }
-    
-    /* Button Styling */
+
+    /* Custom Button */
     .stButton > button {
+        width: 100%;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
+        padding: 0.8rem !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
         border: none !important;
-        padding: 0.75rem 2rem !important;
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        border-radius: 8px !important;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4) !important;
-        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3) !important;
     }
-    
-    .stButton > button:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6) !important;
+
+    /* Metric Overrides */
+    [data-testid="stMetricValue"] {
+        font-weight: 900 !important;
+        color: #667eea !important;
     }
-    
-    /* Sidebar */
-    .sidebar .stRadio > label {
-        font-weight: 600;
-    }
-    
-    /* Responsive */
-    @media (max-width: 768px) {
-        .header-container h1 {
-            font-size: 2rem;
-        }
-        
-        .metric-row {
-            flex-direction: column;
-        }
+
+    /* Sidebar Fixes */
+    section[data-testid="stSidebar"] {
+        background-color: #0b0e14 !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
     </style>
 """, unsafe_allow_html=True)
 
 # ===== HEADER =====
-st.markdown("""
-    <div class="header-container">
-        <h1>⚡ TriLLM Arena v2.0</h1>
-        <p>Iterative Multi-LLM Debate Engine</p>
+st.markdown(f"""
+    <div class="startup-header">
+        <h1>{BRAND_NAME}</h1>
+        <p>{TAGLINE}</p>
     </div>
 """, unsafe_allow_html=True)
 
+
+
+
 # ===== SIDEBAR =====
 with st.sidebar:
-    st.title("⚙️ Configuration")
+    st.image("https://api.iconify.design/heroicons:bolt-20-solid.svg?color=%23667eea", width=50)
+    st.markdown(f"## {BRAND_NAME}")
+    st.caption(TAGLINE)
+    st.divider()
     
-    rounds = st.slider(
-        "Debate Rounds",
-        min_value=1,
-        max_value=5,
-        value=3,
-        help="Number of iterative exchanges between models"
-    )
+    st.markdown("### 🛠️ Configuration")
+    rounds = st.slider("Debate Depth (Rounds)", 1, 5, 3)
     
     st.divider()
     
-    # Metrics Section
-    col1 = st.columns(1)
-    with col1[0]:
-        st.metric("Author", "Soumyadarshan Dash")
-    
-    st.divider()
-    
-    # About Project Button
-    if st.button("ℹ️ About Project", use_container_width=True):
-        with st.expander("📖 Project Information", expanded=True):
-            st.markdown("""
-            ### TriLLM Arena v2.0
-            **Production-Grade Multi-LLM Debate Engine**
-            
-            **About:**
-            A sophisticated debate platform that orchestrates structured arguments 
-            between multiple AI models with iterative exchanges, intelligent judging, 
-            and professional web interface.
-            
-            **Features:**
-            - 🔄 Iterative debate rounds
-            - ⚖️ Expert judge evaluation
-            - 🎙️ Voice output for conclusions
-            - 📊 Real-time scoring
-            - 🎨 Professional UI
-            
-            **Author:** Soumyadarshan Dash  
-            **License:** MIT  
-            **Status:** Production Ready ✅
-            
-            **GitHub:** [TriLLM Arena](https://github.com/soumyadarshandash/trillm-arena)
-            """)
-    
-    st.divider()
-    
-    # Cloud Status
-    st.sidebar.markdown("### ☁️ Cloud Status")
+    # Cloud Health
+    st.markdown("### ☁️ Ecosystem Status")
     import os
     if os.getenv("OPENROUTER_API_KEY") and "your_openrouter" not in os.getenv("OPENROUTER_API_KEY"):
-        st.sidebar.success("✅ OpenRouter API Active")
+        st.success("API: ACTIVE")
     else:
-        st.sidebar.warning("⚠️ OpenRouter Key Missing")
+        st.error("API: MISSING KEY")
 
     if os.getenv("SUPABASE_URL") and "your_supabase" not in os.getenv("SUPABASE_URL"):
-        st.sidebar.success("✅ Supabase Integrated")
+        st.success("DB: SYNCHRONIZED")
     else:
-        st.sidebar.warning("⚠️ Supabase Credentials Missing")
+        st.warning("DB: LOCAL ONLY")
 
     st.divider()
     
-    st.markdown("### Active Models")
-    st.markdown(f"🔵 **Model A**: {MODEL_A_LABEL}")
-    st.markdown(f"🟠 **Model B**: {MODEL_B_LABEL}")
-    st.markdown(f"⚖️ **Judge**: {JUDGE_LABEL}")
+    # Model Specs
+    with st.expander("🤖 Active Model Registry"):
+        st.caption(f"A: {MODEL_A_LABEL}")
+        st.caption(f"B: {MODEL_B_LABEL}")
+        st.caption(f"Judge: {JUDGE_LABEL}")
 
-# ===== MAIN CONTENT =====
-col1, col2 = st.columns([3, 1])
+# ===== NAVIGATION TABS =====
+tab_arena, tab_gallery, tab_stats = st.tabs(["⚔️ Battle Arena", "🎬 Live Gallery", "📊 Model Leaderboards"])
 
-with col1:
-    st.markdown("### Enter Your Debate Topic")
-    topic = st.text_input(
-        "What would you like to debate?",
-        placeholder="e.g., Should AI regulation be government-led?",
-        label_visibility="collapsed"
-    )
+# -----------------------------
+# TAB 1: BATTLE ARENA
+# -----------------------------
+with tab_arena:
+    col1, col2 = st.columns([4, 1.2])
+    
+    with col1:
+        st.markdown("### 📢 Initiative Prompt")
+        topic = st.text_input(
+            "What is the focus of this ratiocination?",
+            placeholder="e.g., The viability of Universal Basic Income in AI economies...",
+            label_visibility="collapsed"
+        )
 
-with col2:
-    start_debate = st.button("🚀 Start Debate", use_container_width=True)
+    with col2:
+        st.markdown("### &nbsp;", unsafe_allow_html=True)
+        start_debate = st.button("EXECUTE PROTOCOL")
 
-# ===== DEBATE EXECUTION =====
-if start_debate:
-    if not topic or len(topic.strip()) < 3:
-        st.error("❌ Please enter a valid topic (at least 3 characters)")
-    else:
-        try:
-            st.markdown("---")
-            
-            # Progress container
-            progress_placeholder = st.empty()
-            rounds_container = st.container()
-            
-            with progress_placeholder.container():
-                st.info("🔄 Starting iterative debate... This may take a minute.")
-            
-            # Run debate
-            logger.info(f"Starting debate: {topic}")
-            result = run_iterative_debate(
-                topic,
-                num_rounds=rounds,
-                model_a_id=MODEL_A_ID,
-                model_b_id=MODEL_B_ID,
-                judge_id=JUDGE_ID,
-            )
-            
-            # Save to Supabase (if configured)
-            db.save_debate(result)
-            
-            progress_placeholder.empty()
-            
-            # ===== DISPLAY ROUNDS =====
-            st.markdown("---")
-            st.markdown("## 📊 Debate Progression")
-            
-            for round_data in result.get("rounds", []):
-                round_num = round_data["round"]
-                is_opening = round_data["type"] == "opening"
-                
-                st.markdown(f"""
-                    <div class="round-container">
-                        <div class="round-header">
-                            <div class="round-title">
-                                {'🎭 Opening Statements' if is_opening else f'Round {round_num}'}
-                            </div>
-                            <div class="round-badge">
-                                {'OPENING' if is_opening else f'ROUND {round_num}'}
-                            </div>
-                        </div>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                col_a, col_b = st.columns(2)
-                
-                with col_a:
-                    st.markdown(f"""
-                        <div class="model-response model-a">
-                            <div class="model-header">
-                                <span class="model-label a">🔵 Model A</span>
-                                <span class="model-badge">{MODEL_A_LABEL}</span>
-                            </div>
-                            <div class="model-text">
-                    """, unsafe_allow_html=True)
-                    st.write(round_data["model_a"])
-                    st.markdown("</div></div>", unsafe_allow_html=True)
-                
-                with col_b:
-                    st.markdown(f"""
-                        <div class="model-response model-b">
-                            <div class="model-header">
-                                <span class="model-label b">🟠 Model B</span>
-                                <span class="model-badge b">{MODEL_B_LABEL}</span>
-                            </div>
-                            <div class="model-text">
-                    """, unsafe_allow_html=True)
-                    st.write(round_data["model_b"])
-                    st.markdown("</div></div>", unsafe_allow_html=True)
-            
-            # ===== DISPLAY VERDICT =====
-            st.markdown("---")
-            
+    if start_debate:
+        if not topic or len(topic.strip()) < 3:
+            st.warning("⚠️ Topic requires at least 3 characters.")
+        else:
             try:
-                verdict = json.loads(result.get("verdict", "{}"))
-                winner = verdict.get("winner", "TIE")
-                reasoning = verdict.get("reasoning", "")
-                scores = verdict.get("scores", {})
+                placeholder = st.empty()
+                with placeholder.container():
+                    st.info("🔬 **Orchestrating Model Agents...**")
+                    progress = st.progress(0)
+                    for i in range(100):
+                        time.sleep(0.01)
+                        progress.progress(i + 1)
                 
-                # ===== WINNER DEBATE CONCLUSION =====
-                st.markdown("## 🏆 Winner Debate Conclusion")
+                # Execute Debate
+                start_time = time.time()
+                result = run_iterative_debate(
+                    topic,
+                    num_rounds=rounds,
+                    model_a_id=MODEL_A_ID,
+                    model_b_id=MODEL_B_ID,
+                    judge_id=JUDGE_ID,
+                )
+                latency = time.time() - start_time
                 
-                rounds_data = result.get("rounds", [])
-                winner_key = "model_a" if winner == "Model A" else "model_b"
+                # Persistence
+                db.save_debate(result)
+                placeholder.empty()
                 
-                # Get winner's final response
-                if rounds_data:
-                    winner_final_response = rounds_data[-1].get(winner_key, "")
-                    
-                    st.markdown(f"""
-                        <div style="background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%); 
-                                    padding: 2rem; border-radius: 12px; margin-bottom: 2rem;
-                                    box-shadow: 0 8px 25px rgba(255, 215, 0, 0.3);">
-                            <h3 style="color: #333; margin-top: 0;">🎯 {winner}'s Conclusion</h3>
-                            <div style="background: white; padding: 1.5rem; border-radius: 8px;
-                                       line-height: 1.8; color: #2f3542;">
-                                {winner_final_response}
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
+                # Display Results
+                st.markdown(f"### 🏆 Final Verdict: {json.loads(result['verdict']).get('winner', 'TIE')}")
                 
-                # ===== JUDGE VERDICT SECTION =====
-                st.markdown("## ⚖️ Final Judgment")
+                # Display Metrics
+                m_col1, m_col2, m_col3 = st.columns(3)
+                m_col1.metric("Latency", f"{latency:.2f}s")
+                m_col2.metric("Rounds", f"{len(result['rounds'])}")
+                m_col3.metric("Tokens", f"~{len(str(result)):,}")
                 
+                # Rounds View
+                for rd in result['rounds']:
+                    with st.expander(f"Round {rd['round']}: {rd['type'].title()}", expanded=(rd['round'] == 0)):
+                        ca, cb = st.columns(2)
+                        with ca:
+                            st.markdown(f"**🔵 {MODEL_A_LABEL}**")
+                            st.write(rd['model_a'])
+                        with cb:
+                            st.markdown(f"**🟠 {MODEL_B_LABEL}**")
+                            st.write(rd['model_b'])
+
+                # Conclusion
+                verdict = json.loads(result['verdict'])
                 st.markdown(f"""
-                    <div class="verdict-section">
-                        <div class="verdict-title">⚖️ Judge's Decision</div>
-                        <div class="verdict-content">
-                            <div class="winner-announce">
-                                🏆 Winner: <strong>{winner}</strong>
-                            </div>
-                            <div class="verdict-reasoning">
-                                {reasoning}
-                            </div>
-                        </div>
+                    <div class="glass-card">
+                        <h4 style="color:#667eea">⚖️ Judicial Reasoning</h4>
+                        <p style="color:#888">{verdict.get('reasoning')}</p>
                     </div>
                 """, unsafe_allow_html=True)
-                
-                # Scores
-                st.markdown("### 📈 Debate Scores")
-                score_col_a, score_col_b = st.columns(2)
-                
-                with score_col_a:
-                    score_a = scores.get("Model A", 5.0)
-                    st.metric("🔵 Model A Score", f"{score_a}/10", delta=None)
-                
-                with score_col_b:
-                    score_b = scores.get("Model B", 5.0)
-                    st.metric("🟠 Model B Score", f"{score_b}/10", delta=None)
-                
-                # ===== VOICE DEBATE PLAYBACK ⭐ NEW =====
-                st.markdown("---")
-                st.markdown("## 🎙️ Voice Debate Playback")
-                
-                voice_col1, voice_col2, voice_col3 = st.columns([2, 1, 1])
-                
-                with voice_col1:
-                    st.write("**🔊 Hear the debate with voices! (macOS/Linux/Windows)**")
-                    if sys.platform == "darwin":
-                        st.info("ℹ️ Using macOS built-in voice (say command)")
-                    elif sys.platform == "win32":
-                        st.info("ℹ️ Using Windows voice synthesis")
-                    else:
-                        st.info("ℹ️ Using Linux voice synthesis (espeak)")
-                
-                with voice_col2:
-                    if st.button("🔊 Play Debate", use_container_width=True):
-                        st.write("🔄 Playing debate with voices...")
-                        
-                        # Play opening round
-                        if rounds_data and len(rounds_data) > 0:
-                            opening = rounds_data[0]
-                            
-                            # Model A opening
-                            with st.spinner("🔵 Model A speaking..."):
-                                st.write(opening.get("model_a", "")[:100] + "...")
-                                speak_text(opening.get("model_a", "")[:500], "A")
-                                import time
-                                time.sleep(2)
-                            
-                            # Model B opening
-                            with st.spinner("🟠 Model B speaking..."):
-                                st.write(opening.get("model_b", "")[:100] + "...")
-                                speak_text(opening.get("model_b", "")[:500], "B")
-                                time.sleep(2)
-                        
-                        # Play remaining rounds
-                        for i in range(1, len(rounds_data)):
-                            round_data = rounds_data[i]
-                            
-                            # Model A response
-                            with st.spinner(f"🔵 Model A Round {i}..."):
-                                st.write(round_data.get("model_a", "")[:100] + "...")
-                                speak_text(round_data.get("model_a", "")[:500], "A")
-                                time.sleep(2)
-                            
-                            # Model B response
-                            with st.spinner(f"🟠 Model B Round {i}..."):
-                                st.write(round_data.get("model_b", "")[:100] + "...")
-                                speak_text(round_data.get("model_b", "")[:500], "B")
-                                time.sleep(2)
-                        
-                        # Final verdict with voice
-                        with st.spinner("⚖️ Judge speaking..."):
-                            verdict_text = f"The winner is {winner}. {reasoning}"
-                            st.write(verdict_text)
-                            speak_text(verdict_text, "A")
-                        
-                        st.success("✅ Debate playback complete!")
-                
-                with voice_col3:
-                    st.info("▶️ Click to play")
-                
-                # Note about voice
-                st.caption("💡 Voices play in background. Turn up system volume!")
-                
-                # ===== DEBATE SUMMARY =====
-                st.markdown("---")
-                st.markdown("## 📋 Complete Debate Summary")
-                
-                summary_text = f"""
-                **Topic:** {result['topic']}
-                
-                **Debate Format:** Iterative ({result['num_rounds']} rounds) with Voice Synthesis
-                
-                **Models:**
-                - Model A (🔵): {MODEL_A_LABEL} (Voice: System Default 1)
-                - Model B (🟠): {MODEL_B_LABEL} (Voice: System Default 2)
-                - Judge (⚖️): {JUDGE_LABEL}
-                
-                **Results:**
-                - **Winner:** {winner}
-                - **Model A Score:** {scores.get("Model A", 5.0)}/10
-                - **Model B Score:** {scores.get("Model B", 5.0)}/10
-                - **Judge's Reasoning:** {reasoning}
-                
-                **Conclusion:**
-                {winner} won the debate based on logical consistency, factual accuracy, 
-                depth of reasoning, clarity of arguments, and minimal risk of hallucination.
-                
-                **Voice Technology:** pyttsx3 (Open-source Text-to-Speech)
-                """
-                
-                with st.expander("📖 View Full Summary", expanded=False):
-                    st.markdown(summary_text)
-                    
-                    # Download summary
-                    st.download_button(
-                        label="📥 Download Summary",
-                        data=summary_text,
-                        file_name=f"debate_summary_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt",
-                        mime="text/plain",
-                        use_container_width=True
-                    )
-            
-            except json.JSONDecodeError:
+
+            except Exception as e:
+                st.error(f"Execution Error: {str(e)}")
+
+# -----------------------------
+# TAB 2: LIVE GALLERY
+# -----------------------------
+with tab_gallery:
+    st.markdown("### 🎬 Archive of Intelligence")
+    st.caption("Real-time stream of debates from the ecosystem.")
+    
+    recent_debates = db.get_recent_debates(limit=10)
+    
+    if not recent_debates:
+        st.info("No recorded debates found in the ecosystem. Start the first one!")
+    else:
+        for d in recent_debates:
+            with st.container():
                 st.markdown(f"""
-                    <div class="verdict-section">
-                        <div class="verdict-title">⚖️ Judge's Review</div>
-                        <div class="verdict-reasoning">
-                            {result.get("verdict", "Judgment unavailable")}
+                    <div class="glass-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <h4 style="margin:0;">{d['topic']}</h4>
+                            <span class="badge badge-primary">WINNER: {d.get('winner', 'TIE')}</span>
                         </div>
+                        <p style="color:#666; font-size:0.9rem; margin-top:8px;">
+                            {d.get('reasoning', '')[:200]}...
+                        </p>
+                        <small style="color:#444;">{d['created_at'][:19].replace('T', ' ')} | vs {d['model_a']} and {d['model_b']}</small>
                     </div>
                 """, unsafe_allow_html=True)
+
+# -----------------------------
+# TAB 3: MODEL STATS
+# -----------------------------
+with tab_stats:
+    st.markdown("### 📊 Ecosystem Intelligence")
+    
+    all_debates = db.get_recent_debates(limit=100)
+    if all_debates:
+        # Calculate Leaderboard
+        wins = {"Model A": 0, "Model B": 0, "TIE": 0}
+        for d in all_debates:
+            w = d.get('winner', 'TIE')
+            if w in wins: wins[w] += 1
+            elif "Model A" in str(w): wins["Model A"] += 1
+            elif "Model B" in str(w): wins["Model B"] += 1
+            else: wins["TIE"] += 1
             
-            # ===== METADATA =====
-            st.markdown("---")
-            st.markdown("### 📋 Debate Metadata")
-            
-            meta_col1, meta_col2, meta_col3 = st.columns(3)
-            
-            with meta_col1:
-                st.markdown(f"**Topic**: {result['topic']}")
-            
-            with meta_col2:
-                st.markdown(f"**Rounds**: {result['num_rounds']}")
-            
-            with meta_col3:
-                st.markdown(f"**Mode**: {result['meta']['mode'].title()}")
-            
-            logger.info(f"Debate completed successfully. Session: {SESSION_ID}")
-        
-        except DebateError as e:
-            st.markdown(f"""
-                <div class="error-box">
-                    <strong>❌ Debate Error</strong><br>
-                    {str(e)}
-                </div>
-            """, unsafe_allow_html=True)
-            logger.error(f"Debate error: {str(e)}")
-        
-        except Exception as e:
-            st.markdown(f"""
-                <div class="error-box">
-                    <strong>❌ Unexpected Error</strong><br>
-                    {str(e)}
-                </div>
-            """, unsafe_allow_html=True)
-            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+        c1, c2, c3 = st.columns(3)
+        c1.metric(f"🔵 {MODEL_A_LABEL} Wins", wins["Model A"])
+        c2.metric(f"🟠 {MODEL_B_LABEL} Wins", wins["Model B"])
+        c3.metric("🤝 Ties", wins["TIE"])
+
+    else:
+        st.info("Stats will populate after the first 5 ecosystem battles.")
 
 # ===== FOOTER =====
 st.markdown("---")
 st.markdown(f"""
-    <div style="text-align: center; color: #666; margin-top: 2rem;">
-        <p>TriLLM Arena v{VERSION} | Built by {AUTHOR} | 
-        <a href="https://github.com/soumyadarshandash/trillm-arena" style="color: #667eea; text-decoration: none;">GitHub</a> | 
-        Session: {SESSION_ID}</p>
+    <div style="text-align: center; color: #444; padding: 2rem;">
+        <p>© 2026 {BRAND_NAME} Intelligence | Version {VERSION} | Engineering by Soumyadarshan Dash</p>
+        <p style="font-size:0.8rem">Zero-Cloud / Local-First / Startup-Grade</p>
     </div>
 """, unsafe_allow_html=True)

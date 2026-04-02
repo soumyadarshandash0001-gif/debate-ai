@@ -28,34 +28,53 @@ class Database:
             return False
 
         try:
-            # Flatten or structure data for Supabase table 'debates'
-            # Expected schema for 'debates' table:
-            # id (uuid, pk), created_at (timestamp), topic (text), 
-            # winner (text), model_a (text), model_b (text), 
-            # rounds (jsonb), verdict (text)
+            # Try to extract winner from verdict if it's JSON
+            import json
+            verdict_text = debate_data.get("verdict", "{}")
+            winner = "Unknown"
+            reasoning = ""
+            scores = {}
             
+            try:
+                verdict_json = json.loads(verdict_text)
+                winner = verdict_json.get("winner", "TIE")
+                reasoning = verdict_json.get("reasoning", "")
+                scores = verdict_json.get("scores", {})
+            except:
+                reasoning = verdict_text
+
             payload = {
                 "topic": debate_data.get("topic"),
                 "model_a": debate_data.get("meta", {}).get("models", [None, None])[0],
                 "model_b": debate_data.get("meta", {}).get("models", [None, None])[1],
                 "rounds": debate_data.get("rounds"),
-                "verdict": debate_data.get("verdict"),
+                "verdict": verdict_text,
+                "winner": winner,
+                "reasoning": reasoning,
+                "scores": scores,
+                "num_rounds": debate_data.get("num_rounds", 0)
             }
             
-            # Try to extract winner from verdict if it's JSON
-            import json
-            try:
-                verdict_json = json.loads(debate_data.get("verdict", "{}"))
-                payload["winner"] = verdict_json.get("winner")
-            except:
-                payload["winner"] = "Unknown"
-
             response = self.client.table("debates").insert(payload).execute()
-            logger.info(f"Debate saved to Supabase: {response.data}")
             return True
         except Exception as e:
             logger.error(f"Error saving debate to Supabase: {str(e)}")
             return False
+
+    def get_recent_debates(self, limit: int = 5) -> list:
+        """Fetch recent debates for the gallery."""
+        if not self.client:
+            return []
+        try:
+            response = self.client.table("debates")\
+                .select("*")\
+                .order("created_at", desc=True)\
+                .limit(limit)\
+                .execute()
+            return response.data
+        except Exception as e:
+            logger.error(f"Error fetching debates: {str(e)}")
+            return []
 
 # Singleton instance
 db = Database()
