@@ -9,13 +9,6 @@ import subprocess
 import os
 import time
 
-# Simple cross-platform TTS
-try:
-    import pyttsx3
-    HAS_PYTTSX3 = True
-except ImportError:
-    HAS_PYTTSX3 = False
-
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -26,7 +19,7 @@ logger = logging.getLogger(__name__)
 # Startup Metadata
 BRAND_NAME = "RATIO"
 TAGLINE = "The Ratiocination Arena"
-VERSION = "3.0.0"
+VERSION = "3.1.0"
 SESSION_ID = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 # Add parent directory to path
@@ -48,38 +41,6 @@ JUDGE_ID = MODEL_CONFIG.judge_id
 MODEL_A_LABEL = MODEL_CONFIG.model_a_label
 MODEL_B_LABEL = MODEL_CONFIG.model_b_label
 JUDGE_LABEL = MODEL_CONFIG.judge_label
-
-# ===== SIMPLE VOICE SYNTHESIS =====
-def speak_text(text: str, model: str = "A") -> bool:
-    """Simple cross-platform text-to-speech."""
-    if not text or len(text.strip()) < 3:
-        return False
-    
-    try:
-        # Limit text to 500 chars for TTS
-        text = text[:500]
-        
-        if sys.platform == "darwin":  # macOS
-            # Use built-in say command
-            os.system(f'say "{text}" 2>/dev/null &')
-            return True
-        elif sys.platform == "win32":  # Windows
-            if HAS_PYTTSX3:
-                try:
-                    engine = pyttsx3.init()
-                    engine.say(text)
-                    engine.runAndWait()
-                    return True
-                except:
-                    return False
-            return False
-        else:  # Linux
-            # Try espeak
-            os.system(f'espeak "{text}" 2>/dev/null &')
-            return True
-    except Exception as e:
-        logger.warning(f"TTS failed: {str(e)}")
-        return False
 
 # ===== Page Configuration =====
 st.set_page_config(
@@ -201,9 +162,6 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-
-
-
 # ===== SIDEBAR =====
 with st.sidebar:
     st.image("https://api.iconify.design/heroicons:bolt-20-solid.svg?color=%23667eea", width=50)
@@ -216,18 +174,20 @@ with st.sidebar:
     
     st.divider()
     
-    # Cloud Health
+    # Ecosystem Status (Cloud Health)
     st.markdown("### ☁️ Ecosystem Status")
-    import os
-    if os.getenv("OPENROUTER_API_KEY") and "your_openrouter" not in os.getenv("OPENROUTER_API_KEY"):
-        st.success("API: ACTIVE")
+    is_cloud_prod = os.getenv("IS_PRODUCTION", "true").lower() == "true"
+    has_router_key = os.getenv("OPENROUTER_API_KEY") is not None
+    
+    if has_router_key:
+        st.success("API: CLOUD ACTIVE")
     else:
-        st.error("API: MISSING KEY")
+        st.warning("API: LOCAL MODE")
 
     if os.getenv("SUPABASE_URL") and "your_supabase" not in os.getenv("SUPABASE_URL"):
         st.success("DB: SYNCHRONIZED")
     else:
-        st.warning("DB: LOCAL ONLY")
+        st.error("DB: LOCAL ONLY")
 
     st.divider()
     
@@ -238,12 +198,18 @@ with st.sidebar:
         st.caption(f"Judge: {JUDGE_LABEL}")
 
 # ===== NAVIGATION TABS =====
-tab_arena, tab_gallery, tab_stats = st.tabs(["⚔️ Battle Arena", "🎬 Live Gallery", "📊 Model Leaderboards"])
+tab_arena, tab_gallery, tab_stats, tab_edge = st.tabs([
+    "⚔️ Battle Arena", 
+    "🎬 Live Gallery", 
+    "📊 Model Leaderboards", 
+    "⚡ Edge Node (P2P)"
+])
 
 # -----------------------------
-# TAB 1: BATTLE ARENA
+# TAB 1: BATTLE ARENA (Cloud/Local API)
 # -----------------------------
 with tab_arena:
+    st.caption("Standard mode using OpenRouter or Local Worker.")
     col1, col2 = st.columns([4, 1.2])
     
     with col1:
@@ -251,6 +217,7 @@ with tab_arena:
         topic = st.text_input(
             "What is the focus of this ratiocination?",
             placeholder="e.g., The viability of Universal Basic Income in AI economies...",
+            key="cloud_topic",
             label_visibility="collapsed"
         )
 
@@ -263,74 +230,54 @@ with tab_arena:
             st.warning("⚠️ Topic requires at least 3 characters.")
         else:
             try:
-                # 🛠️ HYBRID LOGIC
+                # HYBRID LOGIC: If Cloud and no API key, use Task Queue
                 is_prod = os.getenv("IS_PRODUCTION", "true").lower() == "true"
                 has_api = os.getenv("OPENROUTER_API_KEY") is not None
                 
-                # If we're on cloud AND don't have an API key, we use the LOCAL WORKER QUEUE
                 if is_prod and not has_api:
                     st.info("📡 **No API Key detected. Routing to Private Local Node...**")
-                    
                     req_id = db.create_debate_request(topic, rounds, [MODEL_A_ID, MODEL_B_ID])
                     
                     if req_id:
                         placeholder = st.empty()
                         with placeholder.container():
                             st.warning(f"⏳ **Request Queued (ID: {req_id})**")
-                            st.caption("A local machine (using your Ollama) must be running `local_worker.py` to process this.")
-                            
-                            # Polling loop
                             status_label = st.empty()
                             progress = st.progress(0)
                             
-                            for i in range(120): # Timeout after 10 minutes (5s * 120)
+                            for i in range(120):
                                 status = db.check_request_status(req_id)
                                 current_s = status.get('status') if status else 'pending'
                                 
                                 if current_s == 'processing':
                                     status_label.info("⚔️ **Model Node Active: Running Llama 3.1 & 3.2...**")
                                     progress.progress(50)
-                                elif current_s == 'completed' or current_s == 'finished':
-                                    status_label.success("✅ **Debate Complete! Loading results...**")
+                                elif current_s == 'completed':
+                                    status_label.success("✅ **Debate Complete! Loading...**")
                                     progress.progress(100)
                                     time.sleep(2)
-                                    st.rerun() # Gallery will show it
+                                    st.rerun()
                                     break
                                 elif current_s == 'failed':
-                                    status_label.error("❌ **Local Node Error.** Check your logs.")
+                                    status_label.error("❌ **Local Node Error.**")
                                     break
                                 else:
-                                    status_label.caption(f"Waiting for your local node to pick up request... (Attempt {i+1}/120)")
+                                    status_label.caption(f"Waiting for your local node... ({i+1}/120)")
                                     progress.progress(min((i+1)/120, 0.45))
-                                
                                 time.sleep(5)
                     else:
-                        st.error("Could not register request. Is Supabase synchronized?")
+                        st.error("Could not register request.")
                 
                 else:
-                    # DIRECT EXECUTION (Local or OpenRouter)
+                    # DIRECT EXECUTION
                     placeholder = st.empty()
                     with placeholder.container():
                         st.info("🔬 **Orchestrating Model Agents...**")
-                        progress = st.progress(0)
-                
-                    # Execute Debate
-                    start_time = time.time()
-                    result = run_iterative_debate(
-                        topic,
-                        num_rounds=rounds,
-                        model_a_id=MODEL_A_ID,
-                        model_b_id=MODEL_B_ID,
-                        judge_id=JUDGE_ID,
-                    )
-                    latency = time.time() - start_time
-                    
-                    # Persistence
-                    db.save_debate(result)
-                    placeholder.empty()
-                    
-                    # Force Rerun to refresh Gallery/Stats
-                    st.rerun()
+                        res = run_iterative_debate(topic, rounds, MODEL_A_ID, MODEL_B_ID, JUDGE_ID)
+                        db.save_debate(res)
+                        st.success("✅ Protocol Completed.")
+                        time.sleep(1)
+                        st.rerun()
 
             except Exception as e:
                 st.error(f"Execution Error: {str(e)}")
@@ -340,66 +287,140 @@ with tab_arena:
 # -----------------------------
 with tab_gallery:
     st.markdown("### 🎬 Archive of Intelligence")
-    st.caption("Real-time stream of debates from the ecosystem.")
+    debates = db.get_recent_debates(limit=10)
     
-    recent_debates = db.get_recent_debates(limit=10)
-    
-    if not recent_debates:
-        st.info("No recorded debates found in the ecosystem. Start the first one!")
+    if not debates:
+        st.info("No recorded debates yet.")
     else:
-        for d in recent_debates:
+        for d in debates:
             with st.container():
-                # Safe extraction of fields
-                t_topic = d.get('topic', 'Untitled Debate')
+                t_topic = d.get('topic', 'Untitled')
                 t_winner = d.get('winner', 'TIE')
-                t_reasoning = d.get('reasoning', 'No reasoning provided.')
-                t_created = d.get('created_at', 'Long ago')[:19].replace('T', ' ')
-                t_ma = d.get('model_a', 'AI-A')
-                t_mb = d.get('model_b', 'AI-B')
-
+                t_reasoning = d.get('reasoning', '')
+                t_created = d.get('created_at', '')[:19].replace('T', ' ')
+                
                 st.markdown(f"""
                     <div class="glass-card">
                         <div style="display:flex; justify-content:space-between; align-items:center;">
                             <h4 style="margin:0;">{t_topic}</h4>
                             <span class="badge badge-primary">WINNER: {t_winner}</span>
                         </div>
-                        <p style="color:#666; font-size:0.9rem; margin-top:8px;">
-                            {t_reasoning[:200]}...
-                        </p>
-                        <small style="color:#444;">{t_created} | vs {t_ma} and {t_mb}</small>
+                        <p style="color:#888; font-size:0.9rem; margin-top:10px;">{t_reasoning[:250]}...</p>
+                        <small style="color:#555;">{t_created} | vs {d.get('model_a')} & {d.get('model_b')}</small>
                     </div>
                 """, unsafe_allow_html=True)
 
 # -----------------------------
-# TAB 3: MODEL STATS
+# TAB 3: LEADERBOARDS
 # -----------------------------
 with tab_stats:
     st.markdown("### 📊 Ecosystem Intelligence")
-    
-    all_debates = db.get_recent_debates(limit=100)
-    if all_debates:
-        # Calculate Leaderboard
+    all_d = db.get_recent_debates(limit=100)
+    if all_d:
         wins = {"Model A": 0, "Model B": 0, "TIE": 0}
-        for d in all_debates:
+        for d in all_d:
             w = d.get('winner', 'TIE')
-            if w in wins: wins[w] += 1
-            elif "Model A" in str(w): wins["Model A"] += 1
+            if "Model A" in str(w): wins["Model A"] += 1
             elif "Model B" in str(w): wins["Model B"] += 1
             else: wins["TIE"] += 1
-            
+        
         c1, c2, c3 = st.columns(3)
         c1.metric(f"🔵 {MODEL_A_LABEL} Wins", wins["Model A"])
         c2.metric(f"🟠 {MODEL_B_LABEL} Wins", wins["Model B"])
         c3.metric("🤝 Ties", wins["TIE"])
-
     else:
-        st.info("Stats will populate after the first 5 ecosystem battles.")
+        st.info("Stats will populate soon.")
+
+# -----------------------------
+# TAB 4: EDGE NODE (P2P Interface)
+# -----------------------------
+with tab_edge:
+    st.markdown("### ⚡ RATIO Edge Protocol")
+    st.markdown("""
+        **Zero-Infrastructure Mode:** Downloads **Llama 3.2** directly to your browser. 
+        Runs on your **GPU (WebGPU)**. *100% Private & Distributed.*
+    """)
+    
+    e_topic = st.text_input("Browser Debate Topic:", "Is decentralized AI more robust than cloud AI?")
+    e_rounds = st.slider("Browser Rounds", 1, 3, 2, key="edge_rounds_slider")
+    
+    import streamlit.components.v1 as components
+    
+    webllm_component = f"""
+    <div id="status" style="color: #667eea; font-family: sans-serif; padding:15px; border-radius:12px; background: rgba(102,126,234,0.1); border: 1px solid #667eea;">
+        Ready for Edge Activation...
+    </div>
+    <button id="run-btn" style="width: 100%; margin: 15px 0; padding: 15px; background: linear-gradient(135deg, #667eea, #764ba2); color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-family: sans-serif;">
+        ACTIVATE EDGE NODE (Requires WebGPU)
+    </button>
+    <div id="log" style="height: 350px; overflow-y: auto; color: #00ff00; font-family: monospace; font-size: 0.85rem; padding: 15px; border-radius: 12px; background: #000; border: 1px solid #333;">
+        [SYSTEM] Waiting for handshake...
+    </div>
+
+    <script type="module">
+        import * as webllm from "https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm/+esm";
+        const logDiv = document.getElementById("log");
+        const statusDiv = document.getElementById("status");
+        const btn = document.getElementById("run-btn");
+
+        function log(msg) {{
+            const p = document.createElement("p");
+            p.style.margin = "2px 0";
+            p.textContent = `[NODE] ${{msg}}`;
+            logDiv.appendChild(p);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }}
+
+        btn.onclick = async () => {{
+            btn.disabled = true;
+            btn.textContent = "⚙️ INITIALIZING ENGINE...";
+            log("Handshaking with WebGPU...");
+            
+            try {{
+                const engine = await webllm.CreateMLCEngine(
+                    "Llama-3.2-1B-Instruct-q4f16_1-MLC",
+                    {{ initProgressCallback: (p) => {{
+                        statusDiv.textContent = `📦 ${{p.text}} (${{Math.round(p.progress * 100)}}%)`;
+                    }} }}
+                );
+
+                statusDiv.textContent = "⚔️ EDGE NODE ACTIVE";
+                btn.textContent = "⚔️ RUNNING BATTLE...";
+                
+                let hist = [];
+                for (let r = 0; r <= {e_rounds}; r++) {{
+                    log(`STARTING ROUND ${{r}}...`);
+                    const pA = r === 0 ? `Topic: {e_topic}. Short opening.` : `Respond: ${{hist[hist.length-1]}}`;
+                    const rA = await engine.chat.completions.create({{ messages: [{{ role:"user", content:pA }}], max_tokens: 150 }});
+                    const mA = rA.choices[0].message.content;
+                    log(`🔵 [A]: ${{mA}}`);
+                    hist.push(mA);
+
+                    if (r === {e_rounds}) break;
+
+                    const pB = `Counter: ${{mA}}`;
+                    const rB = await engine.chat.completions.create({{ messages: [{{ role:"user", content:pB }}], max_tokens: 150 }});
+                    const mB = rB.choices[0].message.content;
+                    log(`🟠 [B]: ${{mB}}`);
+                    hist.push(mB);
+                }}
+                log("### BATTLE SUCCESSFUL ###");
+                btn.textContent = "✅ COMPLETED";
+            }} catch (e) {{
+                log(`!! ERROR: ${{e.message}}`);
+                btn.disabled = false;
+                btn.textContent = "RETRY ACTIVATION";
+            }}
+        }};
+    </script>
+    """
+    components.html(webllm_component, height=600)
 
 # ===== FOOTER =====
 st.markdown("---")
 st.markdown(f"""
     <div style="text-align: center; color: #444; padding: 2rem;">
         <p>© 2026 {BRAND_NAME} Intelligence | Version {VERSION} | Engineering by Soumyadarshan Dash</p>
-        <p style="font-size:0.8rem">Zero-Cloud / Local-First / Startup-Grade</p>
+        <p style="font-size:0.8rem">P2P Distribution / Edge Computing / Zero-Inference Cost</p>
     </div>
 """, unsafe_allow_html=True)
