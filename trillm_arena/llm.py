@@ -1,7 +1,12 @@
 import logging
 import requests
+import os
 from typing import Optional
 from requests.exceptions import RequestException, Timeout
+import google.generativeai as genai
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -9,45 +14,60 @@ OLLAMA_URL = "http://localhost:11434/api/generate"
 DEFAULT_TIMEOUT = 120
 MAX_RETRIES = 3
 
+# Configure Gemini
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
+
 
 class LLMError(Exception):
     """Custom exception for LLM-related errors."""
     pass
 
 
+def call_gemini(model: str, prompt: str, max_tokens: int, temperature: float) -> str:
+    """Call Google Gemini API."""
+    try:
+        # Map specific model names if needed
+        model_name = model
+        if "gemini" not in model:
+            model_name = "gemini-1.5-flash"
+            
+        gen_model = genai.GenerativeModel(model_name)
+        response = gen_model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                max_output_tokens=max_tokens,
+                temperature=temperature,
+            )
+        )
+        return response.text
+    except Exception as e:
+        logger.error(f"Gemini API error: {str(e)}")
+        raise LLMError(f"Gemini API error: {str(e)}")
+
+
 def call_llm(
     model: str,
     prompt: str,
-    max_tokens: int = 200,
+    max_tokens: int = 400,
     temperature: float = 0.3,
     timeout: int = DEFAULT_TIMEOUT,
 ) -> str:
     """
-    Call Ollama LLM with error handling and retries.
-    
-    Args:
-        model: Model name (e.g., 'llama3.2', 'qwen3-vl:4b')
-        prompt: Prompt text to send to the model
-        max_tokens: Maximum tokens in response
-        temperature: Temperature for generation (0-1)
-        timeout: Request timeout in seconds
-        
-    Returns:
-        Generated text response
-        
-    Raises:
-        LLMError: If the request fails
+    Call LLM (Gemini or Ollama) with error handling and retries.
     """
     
     if not model or not isinstance(model, str):
         raise LLMError(f"Invalid model: {model}")
     
-    if not prompt or not isinstance(prompt, str):
-        raise LLMError("Prompt must be a non-empty string")
-    
-    if not 0 <= temperature <= 1:
-        raise LLMError(f"Temperature must be between 0 and 1, got {temperature}")
-    
+    if "gemini" in model.lower() or os.getenv("USE_CLOUD_MODELS", "true").lower() == "true":
+        if not GEMINI_API_KEY:
+            logger.warning("GEMINI_API_KEY not found, trying local Ollama...")
+        else:
+            return call_gemini(model, prompt, max_tokens, temperature)
+
+    # Fallback to Ollama logic
     payload = {
         "model": model,
         "prompt": prompt,
@@ -60,7 +80,7 @@ def call_llm(
     
     for attempt in range(MAX_RETRIES):
         try:
-            logger.debug(f"Calling {model} (attempt {attempt + 1}/{MAX_RETRIES})")
+            logger.debug(f"Calling Ollama {model} (attempt {attempt + 1}/{MAX_RETRIES})")
             
             response = requests.post(
                 OLLAMA_URL,
@@ -70,50 +90,26 @@ def call_llm(
             response.raise_for_status()
             
             result = response.json()
-
-            if "response" not in result:
-                raise LLMError(f"Invalid response format from {model}")
-
             text = (result.get("response") or "").strip()
-
+            
             if not text and "qwen" in model.lower():
                 # Qwen VL can spend its budget in internal "thinking".
-                # Retry once without options to coax a final response.
                 fallback_payload = {
                     "model": model,
                     "prompt": f"{prompt}\n\nRespond with only the final answer.",
                     "stream": False,
                 }
-                fallback = requests.post(
-                    OLLAMA_URL,
-                    json=fallback_payload,
-                    timeout=timeout,
-                )
+                fallback = requests.post(OLLAMA_URL, json=fallback_payload, timeout=timeout)
                 fallback.raise_for_status()
-                fallback_result = fallback.json()
-                text = (fallback_result.get("response") or "").strip()
+                text = (fallback.json().get("response") or "").strip()
 
             return text
             
-        except Timeout as e:
-            logger.warning(
-                f"Timeout calling {model} (attempt {attempt + 1}/{MAX_RETRIES}): {str(e)}"
-            )
+        except (Timeout, RequestException) as e:
             if attempt == MAX_RETRIES - 1:
-                raise LLMError(f"Timeout after {MAX_RETRIES} attempts: {str(e)}")
-        
-        except RequestException as e:
-            logger.error(
-                f"Request error calling {model} (attempt {attempt + 1}/{MAX_RETRIES}): {str(e)}"
-            )
-            if attempt == MAX_RETRIES - 1:
-                raise LLMError(
-                    f"Failed to call {model} after {MAX_RETRIES} attempts. "
-                    f"Ensure Ollama is running at {OLLAMA_URL}"
-                )
-        
+                raise LLMError(f"Failed to call {model} after {MAX_RETRIES} attempts.")
+            continue
         except Exception as e:
-            logger.error(f"Unexpected error calling {model}: {str(e)}", exc_info=True)
             raise LLMError(f"Unexpected error: {str(e)}")
     
     raise LLMError("Max retries exceeded")

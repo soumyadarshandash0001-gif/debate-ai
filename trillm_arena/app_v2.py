@@ -34,9 +34,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 try:
     from trillm_arena.debate_engine_iterative import run_iterative_debate, DebateError
     from trillm_arena.model_config import get_model_config
+    from trillm_arena.database import db
 except ImportError:
     from debate_engine_iterative import run_iterative_debate, DebateError
     from model_config import get_model_config
+    from database import db
 
 MODEL_CONFIG = get_model_config()
 MODEL_A_ID = MODEL_CONFIG.model_a_id
@@ -404,6 +406,21 @@ with st.sidebar:
     
     st.divider()
     
+    # Cloud Status
+    st.sidebar.markdown("### ☁️ Cloud Status")
+    import os
+    if os.getenv("GEMINI_API_KEY") and "your_gemini" not in os.getenv("GEMINI_API_KEY"):
+        st.sidebar.success("✅ Gemini API Active")
+    else:
+        st.sidebar.warning("⚠️ Gemini API Key Missing")
+
+    if os.getenv("SUPABASE_URL") and "your_supabase" not in os.getenv("SUPABASE_URL"):
+        st.sidebar.success("✅ Supabase Integrated")
+    else:
+        st.sidebar.warning("⚠️ Supabase Credentials Missing")
+
+    st.divider()
+    
     st.markdown("### Active Models")
     st.markdown(f"🔵 **Model A**: {MODEL_A_LABEL}")
     st.markdown(f"🟠 **Model B**: {MODEL_B_LABEL}")
@@ -447,6 +464,9 @@ if start_debate:
                 model_b_id=MODEL_B_ID,
                 judge_id=JUDGE_ID,
             )
+            
+            # Save to Supabase (if configured)
+            db.save_debate(result)
             
             progress_placeholder.empty()
             
